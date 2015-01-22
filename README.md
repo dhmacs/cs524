@@ -1,2 +1,2 @@
-ChicagoFlows
+CS524 Journal
 ============
