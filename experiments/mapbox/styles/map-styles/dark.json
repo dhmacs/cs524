@@ -1,0 +1,147 @@
+[
+  {
+    "featureType": "landscape",
+    "elementType": "geometry.fill",
+    "stylers": [
+      { "color": "#111111" }
+    ]
+  },{
+  "featureType": "road",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "road.arterial",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "road.local",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "administrative.country",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "transit.line",
+  "stylers": [
+    { "color": "#2e2e2e" },
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "water",
+  "stylers": [
+    { "color": "#2e2e2e" }
+  ]
+},{
+  "featureType": "transit.station.airport",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "transit.line",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "transit.line",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "transit.station.bus",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "transit.station.rail",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "administrative.neighborhood",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "administrative.land_parcel",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "landscape.man_made",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "landscape.natural.terrain",
+  "stylers": [
+    { "color": "#808080" }
+  ]
+},{
+  "featureType": "landscape.natural.landcover",
+  "stylers": [
+    { "color": "#111111" }
+  ]
+},{
+  "featureType": "landscape.natural.terrain",
+  "stylers": [
+    { "color": "#111111" }
+  ]
+},{
+  "featureType": "poi.park",
+  "elementType": "geometry",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "poi.business",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "poi.medical",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "poi.place_of_worship",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "poi.school",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "poi.sports_complex",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "poi.business",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "poi.government",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "poi.attraction",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+  "featureType": "poi",
+  "stylers": [
+    { "visibility": "off" }
+  ]
+},{
+}
+]

@@ -3,14 +3,25 @@
     padding: 0;
 }
 
+iframe {
+    border: none;
+}
+
+#tumblr {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+/*
 body {
     font-family: 'Open Sans', sans-serif;
     font-weight: 300;
     font-size: 16px;
     background-color: #ecf0f1;
     color: #34495e;
-    padding-top: 30px;
 }
+
 
 a {
     color: #3498DB;
@@ -109,7 +120,7 @@ hr {
 .section.view-app {
     text-align: center;
 }
-
+*/
 
 
 
