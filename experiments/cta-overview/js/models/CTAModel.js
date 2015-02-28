@@ -15,7 +15,8 @@ function CTAModel() {
 
 
     this.getTrips = function(time, handler) {
-        var request = "http://127.0.0.1:3000/api/trips/";
+        var request = "http://127.0.0.1:3000/api/stops/6627/";
+        //var request = "http://127.0.0.1:3000/api/trips/";
         request +=
             (time.getHours() < 10 ? "0" : "") + time.getHours() + ":" +
             (time.getMinutes() < 10 ? "0" : "") + time.getMinutes() + ":" +

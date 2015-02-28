@@ -26,3 +26,7 @@ Utils.extend = function (subClass, superClass) {
         value: subClass
     });
 };
+
+Utils.toSeconds = function(hh, mm, ss) {
+    return hh * 3600 + mm * 60 + ss;
+};

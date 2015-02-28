@@ -6,7 +6,7 @@
  * @created 1/24/15.
  */
 function UIMapCanvasViewController() {
-    UIViewController.call(this);
+    UIViewController.call(this, new UICanvasView());
 
     /*---------------- PRIVATE ATTRIBUTES ----------------*/
     var self = this;
@@ -20,7 +20,25 @@ function UIMapCanvasViewController() {
 
     var _canvasFrame = {};
 
+    var _delegate = null;
+
     /*------------------ PUBLIC METHODS ------------------*/
+
+    /**
+     *
+     * @param delegate
+     */
+    this.setDelegate = function(delegate) {
+        _delegate = delegate;
+    };
+
+    /**
+     *
+     * @returns {*}
+     */
+    this.getDelegate = function() {
+        return _delegate;
+    };
 
     /**
      * @override
@@ -29,40 +47,29 @@ function UIMapCanvasViewController() {
     this.viewDidAppear = function() {
         var map = self.getModel().getMapModel().getMap();
 
+        var canvas = d3.select(map.canvas.canvas);
+        var size = {
+            width: parseFloat(canvas.style("width")),
+            height: parseFloat(canvas.style("height"))
+        };
 
-        _canvasFrame.x = map.project([_bounds.north, _bounds.west]).x;
-        _canvasFrame.y = map.project([_bounds.north, _bounds.west]).y;
-        _canvasFrame.width = map.project([_bounds.south, _bounds.east]).x - _canvasFrame.x;
-        _canvasFrame.height = map.project([_bounds.south, _bounds.east]).y - _canvasFrame.y;
-
-
-        self.getView().setViewBox(0, 0, _canvasFrame.width, _canvasFrame.height);
-        self.getView().getD3Layer().style("position", "absolute");
-        self.getView().getD3Layer().style("left", _canvasFrame.x);
-        self.getView().getD3Layer().style("top", _canvasFrame.y);
-        self.getView().getD3Layer().style("width", _canvasFrame.width);
-        self.getView().getD3Layer().style("height", _canvasFrame.height);
+        self.getView().setRendererSize(size.width, size.height);
 
         map.on("move", function(e) {
-            var _canvasFrame = {};
-            var map = self.getModel().getMapModel().getMap();
-
-            _canvasFrame.x = map.project([_bounds.north, _bounds.west]).x;
-            _canvasFrame.y = map.project([_bounds.north, _bounds.west]).y;
-            _canvasFrame.width = map.project([_bounds.south, _bounds.east]).x - _canvasFrame.x;
-            _canvasFrame.height = map.project([_bounds.south, _bounds.east]).y - _canvasFrame.y;
-            self.getView().getD3Layer().style("left", _canvasFrame.x);
-            self.getView().getD3Layer().style("top", _canvasFrame.y);
-            self.getView().getD3Layer().style("width", _canvasFrame.width);
-            self.getView().getD3Layer().style("height", _canvasFrame.height);
-
-            //self.getView().setViewBox(0, 0, _canvasFrame.width, _canvasFrame.height);
+            /*
+            if(_delegate != null && typeof _delegate.mapDidMove == "function") {
+                _delegate.mapDidMove();
+            }*/
+            self.onMapMove();
         });
 
         // Call super
         super_viewDidAppear.call(self);
     };
 
+    this.onMapMove = function() {
+        console.log("UIMapCanvasViewController.move");
+    };
 
     /**
      *
@@ -73,8 +80,8 @@ function UIMapCanvasViewController() {
     this.project = function(lat, lng) {
         var map = self.getModel().getMapModel().getMap();
         return {
-            x: map.project([lat, lng]).x  - _canvasFrame.x,
-            y: map.project([lat, lng]).y  - _canvasFrame.y
+            x: (map.project([lat, lng]).x),
+            y: (map.project([lat, lng]).y)
         };
     };
 
