@@ -18,27 +18,7 @@ function UIMapCanvasViewController() {
         south: 41
     };
 
-    var _canvasFrame = {};
-
-    var _delegate = null;
-
     /*------------------ PUBLIC METHODS ------------------*/
-
-    /**
-     *
-     * @param delegate
-     */
-    this.setDelegate = function(delegate) {
-        _delegate = delegate;
-    };
-
-    /**
-     *
-     * @returns {*}
-     */
-    this.getDelegate = function() {
-        return _delegate;
-    };
 
     /**
      * @override
@@ -56,10 +36,6 @@ function UIMapCanvasViewController() {
         self.getView().setRendererSize(size.width, size.height);
 
         map.on("move", function(e) {
-            /*
-            if(_delegate != null && typeof _delegate.mapDidMove == "function") {
-                _delegate.mapDidMove();
-            }*/
             self.onMapMove();
         });
 

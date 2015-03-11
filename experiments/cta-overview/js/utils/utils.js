@@ -30,3 +30,8 @@ Utils.extend = function (subClass, superClass) {
 Utils.toSeconds = function(hh, mm, ss) {
     return hh * 3600 + mm * 60 + ss;
 };
+
+Utils.nowToSeconds = function() {
+    var now = new Date();
+    return Utils.toSeconds(now.getHours(), now.getMinutes(), now.getSeconds());
+};

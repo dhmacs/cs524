@@ -21,6 +21,9 @@ function CTAVisualizationApp() {
         body
             .style("width", "100%")
             .style("height", "100%");
+        MODEL = new AppModel();
         _windowController = new UIWindowController(body.node());
     }();
 }
+
+var MODEL;

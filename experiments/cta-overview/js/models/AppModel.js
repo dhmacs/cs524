@@ -11,6 +11,7 @@ function AppModel() {
 
     var _mapModel;
     var _ctaModel;
+    var _animationModel;
 
     /*------------------ PUBLIC METHODS ------------------*/
 
@@ -30,10 +31,19 @@ function AppModel() {
         return _ctaModel;
     };
 
+    /**
+     *
+     * @returns {*}
+     */
+    this.getAnimationModel = function () {
+        return _animationModel;
+    };
+
 
     /*------------------ PRIVATE METHODS -----------------*/
     var init = function () {
         _mapModel = new MapModel();
         _ctaModel = new CTAModel();
+        _animationModel = new AnimationModel();
     }();
 }

@@ -16,6 +16,9 @@
     <script src="js/external-libraries/mapbox-gl.js"></script>
     <script src="js/external-libraries/queue.js"></script>
     <script src="js/external-libraries/three.js"></script>
+    <script src="js/external-libraries/CSS2DRenderer.js"></script>
+
+    <script src="http://mrdoob.github.com/three.js/examples/fonts/helvetiker_regular.typeface.js"></script>
 
     <!-- APPLICATION SCRIPTS -->
     <!-- generics -->
@@ -28,6 +31,7 @@
     <script src="js/models/AppModel.js"></script>
     <script src="js/models/MapModel.js"></script>
     <script src="js/models/CTAModel.js"></script>
+    <script src="js/models/AnimationModel.js"></script>
 
     <!-- Controllers -->
     <script src="js/controllers/UIViewController.js"></script>
@@ -38,6 +42,14 @@
     <script src="js/controllers/map/UIBusCanvasViewController.js"></script>
     <script src="js/controllers/map/UITransitViewController.js"></script>
 
+    <script src="js/controllers/map/DirectorViewController.js"></script>
+    <script src="js/controllers/map/scenes/SceneController.js"></script>
+    <script src="js/controllers/map/scenes/UserLocationSceneController.js"></script>
+    <script src="js/controllers/map/scenes/TrailsSceneController.js"></script>
+    <script src="js/controllers/map/scenes/BusNumbersSceneController.js"></script>
+    <script src="js/controllers/map/scenes/ConnectionsSceneController.js"></script>
+    <script src="js/controllers/map/scenes/VehiclesPositionSceneController.js"></script>
+
     <!-- Views -->
     <script src="js/view/UIView.js"></script>
     <script src="js/view/UISVGView.js"></script>
@@ -47,6 +59,53 @@
     <script src="js/main.js"></script>
 </head>
 <body>
+<script type="x-shader/x-vertex" id="vertexshader">
 
+			//uniform float amplitude;
+			attribute float size;
+			attribute float vertexOpacity;
+			attribute vec3 customColor;
+
+			varying vec3 vColor;
+			varying float vertexSize;
+			varying float opacity;
+
+			void main() {
+                vertexSize = size;
+                opacity = vertexOpacity;
+				vColor = customColor;
+
+                if(size > 0.0) {
+                    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+
+				    gl_PointSize = size;// * ( 300.0 / length( mvPosition.xyz ) );
+
+				    gl_Position = projectionMatrix * mvPosition;
+                } else {
+                    gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+                }
+			}
+
+		</script>
+
+<script type="x-shader/x-fragment" id="fragmentshader">
+
+			uniform sampler2D texture;
+
+			varying vec3 vColor;
+			varying float vertexSize;
+            varying float opacity;
+
+			void main() {
+                if(vertexSize <= 0.0) {
+                    discard;
+                }
+				//gl_FragColor = vec4( color * vColor, 1.0 );
+				//gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+				gl_FragColor = vec4(vColor, opacity) * texture2D( texture, gl_PointCoord );
+
+			}
+
+</script>
 </body>
 </html>

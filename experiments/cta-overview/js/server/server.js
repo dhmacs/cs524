@@ -128,6 +128,13 @@ app.get('/routes', function(req,res){
     });
 });
 
+app.get('/api/stops/:id', function(req,res) {
+    var graph = app.locals.ctaGraph;
+    var id = req.params.id;
+    var data = graph.getNodeData(id);
+    res.send(data);
+});
+
 app.get('/api/stops/:id/:time', function(req,res){
     var graph = app.locals.ctaGraph;
     var trips = app.locals.trips;
@@ -147,25 +154,29 @@ app.get('/api/stops/:id/:time', function(req,res){
 
     console.time("acc");
 
+    // Given a stopId show the available trips
     var availableTripsIds = getAvailableTripsIds(id, interval);
     var result = {};
 
-    console.log(availableTripsIds);
-
     availableTripsIds.forEach(function(tripId) {
-        result[tripId] = _.extend({}, trips[tripId]);
-        console.log("\n\n--------");
-        console.log(result);
+        result[tripId] = _.extend({}, trips[tripId]);   // The purpose of this instruction is to clone trips[tripId]
+        result[tripId].hop = 0;
 
-        result[tripId]["stops"].forEach(function(stop) {
+        var currentTripUserStopIndex = _.findIndex(result[tripId]["stops"], {stopId: id});
+        // Filter stops previous to the stop nearby the user
+        _.filter(result[tripId]["stops"], function(stop) {
+            // Side effect
             var node = graph.getNodeData(stop["stopId"]);
             stop.lat = node.stopLatitude;
             stop.lon = node.stopLongitude;
 
+            // Filter stops before the location of the user
+            return _.findIndex(result[tripId]["stops"], {stopId: stop["stopId"]}) > currentTripUserStopIndex;
+        }).forEach(function(stop) { // For each stop look for connections with other vehicles
             stop.transfers = [];
             var transferInterval = {
                 start: ds.timeToSeconds(stop["arrivalTime"]["hh"], stop["arrivalTime"]["mm"], stop["arrivalTime"]["ss"]),
-                duration: ds.timeToSeconds(0, 15, 0)
+                duration: ds.timeToSeconds(0, 15, 0) /*15 minutes*/
             };
             if(transferInterval.start > interval.start) {
                 var availableTransfers = _.filter(getAvailableTripsIds(stop["stopId"], transferInterval), function(id) {
@@ -173,22 +184,48 @@ app.get('/api/stops/:id/:time', function(req,res){
                 });
 
                 availableTransfers.forEach(function(transferId) {
-                    if(result[transferId] == undefined) {
+                    var transferRouteId = trips[transferId].routeId;
+                    var transferDirectionId = trips[transferId].directionId;
+
+                    var similarTrips = findSameRoutesAndDirection(result, transferRouteId, transferDirectionId);
+
+                    if(result[transferId] == undefined && similarTrips.length == 0) {
                         result[transferId] = _.extend({}, trips[transferId]);
-                        result[transferId]["stops"].forEach(function(stop) {
-                            var node = graph.getNodeData(stop["stopId"]);
-                            stop.lat = node.stopLatitude;
-                            stop.lon = node.stopLongitude;
+                        result[transferId].hop = 1;
+                        var connectionStopIndex = _.findIndex(result[transferId]["stops"], {stopId: stop["stopId"]});
+                        result[transferId]["stops"].forEach(function(transferStop, stopIndex) {
+                            var node = graph.getNodeData(transferStop["stopId"]);
+                            transferStop.lat = node.stopLatitude;
+                            transferStop.lon = node.stopLongitude;
+                            if(stopIndex >= connectionStopIndex) {
+                                transferStop.relevant = true;
+                            } else if(stop.relevant == undefined) {
+                                transferStop.relevant = false;
+                            }
                         });
+                        stop.transfers.push(transferId);
                     }
                 });
-                stop.transfers = stop.transfers.concat(availableTransfers);
             }
         });
     });
 
     res.send(result);
 });
+
+var findSameRoutesAndDirection = function(dictionary, routeId, directionId) {
+    var trips = app.locals.trips;
+    var result = [];
+
+    for(var tripId in dictionary) {
+        var tmpRouteId = trips[tripId].routeId;
+        var tmpDirectionId = trips[tripId].directionId;
+        if(tmpRouteId == routeId && tmpDirectionId == directionId) {
+            result.push(tripId);
+        }
+    }
+    return result;
+};
 
 /**
  *

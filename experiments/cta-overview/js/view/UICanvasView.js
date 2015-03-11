@@ -7,7 +7,10 @@
  */
 function UICanvasView() {
     var _renderer = new THREE.WebGLRenderer({
-        alpha: true
+        alpha: true,
+        antialias: true,
+        //precision: "highp",
+        premultipliedAlpha: false
     });
     UIView.call(this, _renderer.domElement);
 

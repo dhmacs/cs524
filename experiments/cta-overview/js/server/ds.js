@@ -48,7 +48,7 @@
         }
     }
     ds.timeToSeconds = function(hours, minutes, seconds) {
-        return hours * 3600 +  minutes * 60 + seconds;
+        return parseInt(hours) * 3600 +  parseInt(minutes) * 60 + parseInt(seconds);
     };
 
     // Export the Underscore object for **Node.js**, with

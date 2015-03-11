@@ -12,8 +12,6 @@ function UIWindowController(htmlContainer) {
     /*---------------- PRIVATE ATTRIBUTES ----------------*/
     var self = this;
 
-    var _model;
-
     /*------------------ PUBLIC METHODS ------------------*/
 
     /**
@@ -21,18 +19,13 @@ function UIWindowController(htmlContainer) {
      * @returns {*}
      */
     this.getModel = function() {
-        return _model;
+        return MODEL;
     };
 
 
     /*------------------ PRIVATE METHODS -----------------*/
     var init = function () {
         // Initialize model
-        _model = new AppModel();
-
-        // TODO: debug
-        __DEBUGModel = _model;
-
         self.getView().addClass("ui-window-controller");
 
         self.add(new UIMapViewController());

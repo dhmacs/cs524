@@ -11,6 +11,10 @@ function UIBusCanvasViewController() {
     /*---------------- PRIVATE ATTRIBUTES ----------------*/
     var self = this;
 
+    var _data;
+    var _animationTime;
+    var _animationEndTime;
+
     /*------------------ PUBLIC METHODS ------------------*/
     /**
      * @override
@@ -30,13 +34,22 @@ function UIBusCanvasViewController() {
             .style("fill", "#fff")
             .style("opacity", "0.8");
 
+        d3.json("http://127.0.0.1:3000/api/stops/6627/", function(json) {
+            var proj = self.project(json["stopLatitude"], json["stopLongitude"]);
+            self.getView().getD3Layer()
+                .append("circle")
+                .attr("cx", proj.x)
+                .attr("cy", proj.y)
+                .attr("r", "2");
+        });
+
         self.getModel().getCTAModel().getTrips(new Date(), function(json) {
             console.log("ok");
-
+            _data = json;
             //animation(json);
             //lineAnimation(json);
             //textAnimation(json);
-            busNumbers(json);
+            //busNumbers(json);
             busTrajectories(json);
         });
     };
@@ -131,9 +144,10 @@ function UIBusCanvasViewController() {
     };
 
 
-
-
-
+    /**
+     * OLD line animation
+     * @param json
+     */
     var lineAnimation = function(json) {
         var data = d3.values(json);
 
@@ -174,126 +188,142 @@ function UIBusCanvasViewController() {
             .attr("opacity", "0.2");
     };
 
+    var getLastStopIndex = function(time, stops) {
+        var s = 0;
+        var stopTimeInSeconds;
 
+        while(s < stops.length) {
+            stopTimeInSeconds =
+                Utils.toSeconds(
+                    stops[s]["arrivalTime"]["hh"],
+                    stops[s]["arrivalTime"]["mm"],
+                    stops[s]["arrivalTime"]["ss"]
+                );
+            if(time < stopTimeInSeconds) {
+                return s -1;
+            }
+            s++;
+        }
+
+        return -1;
+    };
 
     var busNumbers = function(json) {
         var data = d3.values(json);
+
         var speedup = 30;
+
+        var now = new Date();
+        console.log("NOW=" + now);
+        //now = Utils.toSeconds(now.getHours(), now.getMinutes(), now.getSeconds());
+        now = Utils.toSeconds(12, 15, 0);
 
         var vehicles = self.getView().getD3Layer().selectAll(".vehicle").data(data);
 
-        vehicles = vehicles.enter()
+        vehicles.enter()
             .append("text")
-            .attr("x", function(d) {
-                return self.project(parseFloat(d["stops"][0]["lat"]), parseFloat(d["stops"][0]["lon"])).x;
-            })
-            .attr("y", function(d) {
-                return self.project(parseFloat(d["stops"][0]["lat"]), parseFloat(d["stops"][0]["lon"])).y;
-            })
+            .classed("vehicle", true)
             .attr("text-anchor", "middle")
             .attr("dy", "0.5em")
             .text(function(d) {
                 return d["routeId"];
             })
             .attr("fill", function(d) {
-                return "#" + (d.color != "" ? d.color : "3182bd");
+                return "#3182bd";//"#" + (d.color != "" ? d.color : "3182bd");
             })
             .attr("font-size", "4px")
-            .style("opacity", "0");
+            .each(function(vehicleData) {
+                var vehicle = d3.select(this);
+                var lastStopIndex = getLastStopIndex(now, vehicleData["stops"]);
+                var stopTimeInSeconds;
+                var projection;
 
-        var now = new Date();
-        now = Utils.toSeconds(now.getHours(), now.getMinutes(), now.getSeconds());
-        vehicles = vehicles.transition()
-            .delay(function(d) {
-                var stopTimeInSeconds =
-                    Utils.toSeconds(
-                        d["stops"][0]["departureTime"]["hh"],
-                        d["stops"][0]["departureTime"]["mm"],
-                        d["stops"][0]["departureTime"]["ss"]
+                // Initialize vehicles positions
+                if(lastStopIndex == -1) {
+                    stopTimeInSeconds = Utils.toSeconds(
+                        vehicleData["stops"][0]["departureTime"]["hh"],
+                        vehicleData["stops"][0]["departureTime"]["mm"],
+                        vehicleData["stops"][0]["departureTime"]["ss"]
                     );
+                    projection = self.project(
+                        parseFloat(vehicleData["stops"][0]["lat"]),
+                        parseFloat(vehicleData["stops"][0]["lon"])
+                    );
+                    vehicle = vehicle
+                        .attr("x", function() {
+                            return projection.x;
+                        })
+                        .attr("y", function() {
+                            return projection.y;
+                        })
+                        .style("opacity", "0");
+                    vehicle = vehicle.transition()
+                        .delay(function() {
+                            return ((now - stopTimeInSeconds) * 1000) / speedup;
+                        })
+                        .style("opacity", "1");
 
-                if(now < stopTimeInSeconds) {
-                    return ((now - stopTimeInSeconds) * 1000) / speedup;
+                    lastStopIndex = 0;
+                } else {
+                    var next = vehicleData["stops"][lastStopIndex +1]["arrivalTime"];
+                    next = Utils.toSeconds(next.hh, next.mm, next.ss);
+                    var previous = vehicleData["stops"][lastStopIndex]["departureTime"];
+                    previous = Utils.toSeconds(previous.hh, previous.mm, previous.ss);
+                    var delta = (now - previous) / (next - previous);
+                    var lat = d3.interpolateNumber(
+                        parseFloat(vehicleData["stops"][lastStopIndex]["lat"]),
+                        parseFloat(vehicleData["stops"][lastStopIndex +1]["lat"])
+                    )(delta);
+                    var lon = d3.interpolateNumber(
+                        parseFloat(vehicleData["stops"][lastStopIndex]["lon"]),
+                        parseFloat(vehicleData["stops"][lastStopIndex +1]["lon"])
+                    )(delta);
+
+                    projection = self.project(lat, lon);
+                    vehicle = vehicle
+                        .attr("x", function() {
+                            return projection.x;
+                        })
+                        .attr("y", function() {
+                            return projection.y;
+                        });
                 }
 
-                return 0;
-                /*
-                var nextStopTimeInSeconds;
-
-                do {
-                    stopTimeInSeconds =
-                        Utils.toSeconds(
-                            d["stops"][s]["departureTime"]["hh"],
-                            d["stops"][s]["departureTime"]["mm"],
-                            d["stops"][s]["departureTime"]["ss"]
-                        );
-                    nextStopTimeInSeconds =
-                        Utils.toSeconds(
-                            d["stops"][s +1]["arrivalTime"]["hh"],
-                            d["stops"][s +1]["arrivalTime"]["mm"],
-                            d["stops"][s +1]["arrivalTime"]["ss"]
-                        );
-                } while(now >= stopTimeInSeconds && now < nextStopTimeInSeconds);*/
-            })
-            .style("opacity", "1");
-
-        vehicles.each(function(d) {
-            var vehicle = d3.select(this);
-
-            var s = -1;
-            var stopTimeInSeconds;
-            var nextStopTimeInSeconds;
-
-            do {
-                s++;
-                stopTimeInSeconds =
-                    Utils.toSeconds(
-                        d["stops"][s]["departureTime"]["hh"],
-                        d["stops"][s]["departureTime"]["mm"],
-                        d["stops"][s]["departureTime"]["ss"]
+                while(lastStopIndex < vehicleData["stops"].length -1) {
+                    projection = self.project(
+                        parseFloat(vehicleData["stops"][lastStopIndex +1]["lat"]),
+                        parseFloat(vehicleData["stops"][lastStopIndex +1]["lon"])
                     );
-                nextStopTimeInSeconds =
-                    Utils.toSeconds(
-                        d["stops"][s +1]["arrivalTime"]["hh"],
-                        d["stops"][s +1]["arrivalTime"]["mm"],
-                        d["stops"][s +1]["arrivalTime"]["ss"]
-                    );
-            } while(now >= stopTimeInSeconds && now < nextStopTimeInSeconds);
+                    vehicle = vehicle.transition()
+                        .duration(function() {
+                            var next = vehicleData["stops"][lastStopIndex +1]["arrivalTime"];
+                            next = Utils.toSeconds(next.hh, next.mm, next.ss);
+                            var previous = vehicleData["stops"][lastStopIndex]["departureTime"];
+                            previous = Utils.toSeconds(previous.hh, previous.mm, previous.ss);
+                            return ((next - previous) * 1000) / speedup;
+                        })
+                        .attr("x", function() {
+                            return projection.x;
+                        })
+                        .attr("y", function() {
+                            return projection.y;
+                        });
+                    lastStopIndex++;
+                }
 
-            while(s < d["stops"].length -1) {
-
-                stopTimeInSeconds =
-                    Utils.toSeconds(
-                        d["stops"][s]["departureTime"]["hh"],
-                        d["stops"][s]["departureTime"]["mm"],
-                        d["stops"][s]["departureTime"]["ss"]
-                    );
-                nextStopTimeInSeconds =
-                    Utils.toSeconds(
-                        d["stops"][s +1]["arrivalTime"]["hh"],
-                        d["stops"][s +1]["arrivalTime"]["mm"],
-                        d["stops"][s +1]["arrivalTime"]["ss"]
-                    );
-
-                vehicle = vehicle.transition()
-                    .duration(function() {
-                        return ((nextStopTimeInSeconds - stopTimeInSeconds) * 1000) / speedup;
-                    })
-                    .attr("x", function() {
-                        return self.project(d["stops"][s +1]["lat"], d["stops"][s +1]["lon"]).x;
-                    })
-                    .attr("y", function() {
-                        return self.project(d["stops"][s +1]["lat"], d["stops"][s +1]["lon"]).y;
-                    });
-
-                s++;
-            }
-        });
+            });
     };
 
     var busTrajectories = function(json) {
-        var data = d3.values(json);
+        //var data = d3.values(json);
 
+        _animationTime = Utils.toSeconds(12, 15, 0);//Utils.nowToSeconds();
+        _animationEndTime = _animationTime + Utils.toSeconds(1, 0, 0) /*1 hour*/;
+        d3.timer(function() {
+            update();
+            draw();
+        });
+        /*
         var line = d3.svg.line();
         line
             .x(function(d) {
@@ -314,8 +344,62 @@ function UIBusCanvasViewController() {
             .attr("fill", "none")
             .attr("stroke-width", "0.5")
             .attr("stroke", function (d) {
-                return "#" + (d.color != "" ? d.color : "3182bd");
-            });
+                return "#3182bd"; //+ (d.color != "" ? d.color : "3182bd");
+            });*/
+    };
+
+    var update = function() {
+        _animationTime += 10;
+        if(_animationTime >= _animationEndTime) {
+            _animationTime = Utils.toSeconds(12, 15, 0);//Utils.nowToSeconds();
+            _animationEndTime = _animationTime + Utils.toSeconds(1, 0, 0);
+            var svg = self.getView().getD3Layer();
+            svg.selectAll(".trail").remove();
+        }
+    };
+
+    var draw = function() {
+        var svg = self.getView().getD3Layer();
+        var vehiclesData = d3.values(_data);
+        vehiclesData.forEach(function(vehicleData) {
+            var previousStopIndex = getLastStopIndex(_animationTime, vehicleData["stops"]);
+            if(previousStopIndex > -1) {
+                // Compute next stop time in seconds
+                var next = vehicleData["stops"][previousStopIndex +1]["arrivalTime"];
+                next = Utils.toSeconds(next.hh, next.mm, next.ss);
+
+                // Compute previous stop time in seconds
+                var previous = vehicleData["stops"][previousStopIndex]["departureTime"];
+                previous = Utils.toSeconds(previous.hh, previous.mm, previous.ss);
+
+                // Compute time passed from the previous stop
+                var delta = (_animationTime - previous) / (next - previous);
+                var lat = d3.interpolateNumber(
+                    parseFloat(vehicleData["stops"][previousStopIndex]["lat"]),
+                    parseFloat(vehicleData["stops"][previousStopIndex +1]["lat"])
+                )(delta);
+                var lon = d3.interpolateNumber(
+                    parseFloat(vehicleData["stops"][previousStopIndex]["lon"]),
+                    parseFloat(vehicleData["stops"][previousStopIndex +1]["lon"])
+                )(delta);
+
+                var projection = self.project(lat, lon);
+
+                svg.append("circle")
+                    .classed("trail", true)
+                    .attr("cx", projection.x)
+                    .attr("cy", projection.y)
+                    .attr("r", 1.2)
+                    .style("fill", "#3182bd")
+                    .style("opacity", 1)
+                    .transition()
+                    .duration(1000)
+                    .ease("cubic")
+                    .attr("r", 1)
+                    .style("opacity", 0.1);
+                    //.remove();
+            }
+        });
     };
 
 

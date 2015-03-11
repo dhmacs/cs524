@@ -29,6 +29,19 @@ function MapModel() {
         return _map;
     };
 
+    /**
+     *
+     * @param lat
+     * @param lng
+     * @returns {{x: (number|*), y: (number|*)}}
+     */
+    this.project = function(lat, lng) {
+        return {
+            x: (_map.project([lat, lng]).x),
+            y: (_map.project([lat, lng]).y)
+        };
+    };
+
     /*------------------ PRIVATE METHODS -----------------*/
     var init = function () {
 
