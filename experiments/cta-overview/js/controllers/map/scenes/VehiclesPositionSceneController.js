@@ -21,11 +21,11 @@ function VehiclesPositionSceneController() {
 
     var _circlesOpacities = {
         max: 1.0,
-        min: 0.5
+        min: 0.95
     };
 
     var _vehicleSizes = {
-        max: 50,
+        max: 40,
         min: 40
     };
 
@@ -40,7 +40,7 @@ function VehiclesPositionSceneController() {
      */
     this.update = function() {
         if(_dataAvailable) {
-            var currentTime = Utils.toSeconds(12,16,0);//Utils.nowToSeconds();
+            var currentTime = Utils.nowToSeconds();
 
             var trips = d3.values(_trips);
 
@@ -117,19 +117,12 @@ function VehiclesPositionSceneController() {
                             }
 
                             opacity[bufferIndex + j] += _vehiclesBufferMapping[tripId].delta;
-                            /*
-                            if(opacity[bufferIndex + j] < _circlesOpacities.max) {
-                                opacity[bufferIndex + j] += _vehiclesBufferMapping[tripId].delta;
-                            } else if(opacity[bufferIndex + j] >= _circlesOpacities.max) {
 
-                            }
-                            else {
-                                opacity[bufferIndex + j] = _circlesOpacities.min;
-                            }*/
-                            size[j] =
+                            size[j] = _vehicleSizes.max;
+                                /*
                                 (_circlesOpacities.max - opacity[bufferIndex + j]) *
                                 (_vehicleSizes.max - _vehicleSizes.min)
-                                + _vehicleSizes.min;
+                                + _vehicleSizes.min;*/
                         }
                     }
                 }
@@ -166,7 +159,7 @@ function VehiclesPositionSceneController() {
     var init = function () {
         _dataAvailable = false;
 
-        MODEL.getCTAModel().getTrips(new Date(), function(json) {
+        MODEL.getCTAModel().getTrips(Utils.now(), function(json) {
             for(var tripId in json) {
                 if(parseInt(json[tripId]["hop"]) == 0) {
                     _trips[tripId] = json[tripId];
@@ -179,8 +172,10 @@ function VehiclesPositionSceneController() {
                 customColor: { type: 'c', value: [] },
                 vertexOpacity: { type: 'f', value: [] }
             };
+            var texture = THREE.ImageUtils.loadTexture( "img/circle.png" );
+            texture.minFilter = THREE.LinearFilter;
             var uniforms = {
-                texture:   { type: "t", value: THREE.ImageUtils.loadTexture( "img/circle.png" ) }
+                texture:   { type: "t", value: /*THREE.ImageUtils.loadTexture( "img/circle.png" )*/texture }
             };
 
             var shaderMaterial = new THREE.ShaderMaterial( {

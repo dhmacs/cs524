@@ -60,8 +60,12 @@ function UserLocationSceneController() {
             customColor: { type: 'c', value: [] },
             vertexOpacity: { type: 'f', value: [] }
         };
+
+        var texture = THREE.ImageUtils.loadTexture( "img/circle.png" );
+        texture.minFilter = THREE.LinearFilter;
+
         var uniforms = {
-            texture:   { type: "t", value: THREE.ImageUtils.loadTexture( "img/circle.png" ) }
+            texture:   { type: "t", value: /*THREE.ImageUtils.loadTexture( "img/circle.png" )*/texture }
         };
 
         var shaderMaterial = new THREE.ShaderMaterial( {

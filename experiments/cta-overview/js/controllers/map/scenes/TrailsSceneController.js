@@ -20,7 +20,7 @@ function TrailsSceneController() {
     var _minTrailSize = 4;
     var _decrementPerFrame = 0.02;
     var _minOpacity = 0.2;
-    var _maxOpacity = 0.7;
+    var _maxOpacity = 0.6;
     var _deltaOpacity = 0.03;
 
     /*------------------ PUBLIC METHODS ------------------*/
@@ -30,7 +30,7 @@ function TrailsSceneController() {
      */
     this.update = function() {
         var currentTime = MODEL.getAnimationModel().getTime();
-        MODEL.getCTAModel().getTrips(new Date(), function(json) {
+        MODEL.getCTAModel().getTrips(Utils.now(), function(json) {
             var trips = d3.values(json);
 
             var size = _geometryBuffer.attributes.size.array;
@@ -38,7 +38,7 @@ function TrailsSceneController() {
             var color = _geometryBuffer.attributes.customColor.array;
             var opacity = _geometryBuffer.attributes.vertexOpacity.array;
 
-            if(MODEL.getAnimationModel().getState() == AnimationModel.START) {
+            if(MODEL.getAnimationModel().getState() == AnimationState.START) {
                 for(var i = 0; i < size.length; i++) {
                     size[i] = 0;
                     opacity[i] = 1;
@@ -145,7 +145,7 @@ function TrailsSceneController() {
     };
 
     var init = function () {
-        MODEL.getCTAModel().getTrips(new Date(), function(json) {
+        MODEL.getCTAModel().getTrips(Utils.now(), function(json) {
 
             // Initialize WebGL variables
             var attributes = {
@@ -153,8 +153,12 @@ function TrailsSceneController() {
                 customColor: { type: 'c', value: [] },
                 vertexOpacity: { type: 'f', value: [] }
             };
+
+            var texture = THREE.ImageUtils.loadTexture( "img/circle.png" );
+            texture.minFilter = THREE.LinearFilter;
+
             var uniforms = {
-                texture:   { type: "t", value: THREE.ImageUtils.loadTexture( "img/circle.png" ) }
+                texture:   { type: "t", value: /*THREE.ImageUtils.loadTexture( "img/circle.png" )*/texture }
             };
 
             var shaderMaterial = new THREE.ShaderMaterial( {

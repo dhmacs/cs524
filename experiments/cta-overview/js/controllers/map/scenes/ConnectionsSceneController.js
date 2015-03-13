@@ -14,6 +14,9 @@ function ConnectionsSceneController() {
     var _geometryBuffer;
     var _transfers = {};
 
+    var _connectionSize = 35;
+    var _connectionOpacity = 0.7;
+
     /*------------------ PUBLIC METHODS ------------------*/
     /**
      * Update the model of the scene
@@ -22,7 +25,7 @@ function ConnectionsSceneController() {
         var currentTime = MODEL.getAnimationModel().getTime();
         var deltaTime = MODEL.getAnimationModel().getDeltaTime();
 
-        MODEL.getCTAModel().getTrips(new Date(), function(json) {
+        MODEL.getCTAModel().getTrips(Utils.now(), function(json) {
             var trips = d3.values(json);
 
             // Handle connections
@@ -31,7 +34,7 @@ function ConnectionsSceneController() {
             var color = _geometryBuffer.attributes.customColor.array;
             var opacity = _geometryBuffer.attributes.vertexOpacity.array;
 
-            if(MODEL.getAnimationModel().getState() == AnimationModel.START) {
+            if(MODEL.getAnimationModel().getState() == AnimationState.START) {
                 for(var i = 0; i < size.length; i++) {
                     size[i] = 0;
                     opacity[i] = 0;
@@ -39,9 +42,13 @@ function ConnectionsSceneController() {
             } else {
                 var tColor = new THREE.Color();
 
+                /*
                 var colorScale = d3.scale.linear()
                     .domain([0, Utils.toSeconds(0, 7, 0), Utils.toSeconds(0, 15, 0)])// TODO: Change to actual maximum transfer time
-                    .range(["#a50026", "#fdae61", "#006837"]);
+                    .range(["#a50026", "#fdae61", "#006837"]);*/
+                var colorScale = d3.scale.quantize()
+                    .domain([0, Utils.toSeconds(0, 15, 0)])// TODO: Change to actual maximum transfer time
+                    .range(["#a50026", "#f46d43", "#fee08b", "#66bd63", "#006837"]);
 
                 // Update current state of transfers
                 /*
@@ -127,8 +134,8 @@ function ConnectionsSceneController() {
                                 color[i * 3 +1] = tColor.g;
                                 color[i * 3 +2] = tColor.b;
 
-                                opacity[i] = 0.7;
-                                size[i] = 40;
+                                opacity[i] = _connectionOpacity;
+                                size[i] = _connectionSize;
                             });
                         }
 
@@ -177,15 +184,19 @@ function ConnectionsSceneController() {
     };
 
     var init = function () {
-        MODEL.getCTAModel().getTrips(new Date(), function(json) {
+        MODEL.getCTAModel().getTrips(Utils.now(), function(json) {
             // Initialize WebGL variables
             var attributes = {
                 size: {	type: 'f', value: [] },
                 customColor: { type: 'c', value: [] },
                 vertexOpacity: { type: 'f', value: [] }
             };
+
+            var texture = THREE.ImageUtils.loadTexture( "img/circle.png" );
+            texture.minFilter = THREE.LinearFilter;
+
             var uniforms = {
-                texture:   { type: "t", value: THREE.ImageUtils.loadTexture( "img/circle.png" ) }
+                texture:   { type: "t", value: /*THREE.ImageUtils.loadTexture( "img/circle.png" )*/texture }
             };
 
             var shaderMaterial = new THREE.ShaderMaterial( {

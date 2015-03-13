@@ -10,6 +10,7 @@ function CTAModel() {
     var self = this;
 
     var _trips = null;
+    var _requesting;
 
     /*------------------ PUBLIC METHODS ------------------*/
 
@@ -17,13 +18,13 @@ function CTAModel() {
     this.getTrips = function(time, handler) {
         if(_trips == null) {
             var request = "http://127.0.0.1:3000/api/stops/6627/";
-            //var request = "http://127.0.0.1:3000/api/trips/";
-            request += "12:15:00"; /*
+
+            request +=
              (time.getHours() < 10 ? "0" : "") + time.getHours() + ":" +
              (time.getMinutes() < 10 ? "0" : "") + time.getMinutes() + ":" +
-             (time.getSeconds() < 10 ? "0" : "") + time.getSeconds();*/
+             (time.getSeconds() < 10 ? "0" : "") + time.getSeconds();
 
-            console.log("REQUEST: " + /*request*/ "12:15:00");
+            console.log("REQUEST: " + request);
             d3.json(request, function(json) {
                 _trips = json;
                 handler(json);
@@ -35,6 +36,6 @@ function CTAModel() {
 
     /*------------------ PRIVATE METHODS -----------------*/
     var init = function () {
-
+        _requesting = false;
     }();
 }

@@ -5,6 +5,9 @@
  * @author Massimo De Marchi
  */
 var Utils = Utils || {};
+Utils.gl = {};
+Utils.cta = {};
+
 Utils.extend = function (subClass, superClass) {
     // Avoid instantiating the superClass class just to setup inheritance
     // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create
@@ -32,6 +35,39 @@ Utils.toSeconds = function(hh, mm, ss) {
 };
 
 Utils.nowToSeconds = function() {
-    var now = new Date();
+    var now = Utils.now();
     return Utils.toSeconds(now.getHours(), now.getMinutes(), now.getSeconds());
+};
+
+Utils.now = function() {
+    var now = new Date();
+    //now.setHours(13);
+    now.setMinutes(15);
+    return now;
+};
+
+Utils.gl.circleTexture = function() {
+    var texture = THREE.ImageUtils.loadTexture( "img/circle.png" );
+    texture.minFilter = THREE.LinearFilter;
+    return texture;
+};
+
+Utils.cta.getLastStopIndex = function(time, stops) {
+    var s = 0;
+    var stopTimeInSeconds;
+
+    while(s < stops.length) {
+        stopTimeInSeconds =
+            Utils.toSeconds(
+                stops[s]["arrivalTime"]["hh"],
+                stops[s]["arrivalTime"]["mm"],
+                stops[s]["arrivalTime"]["ss"]
+            );
+        if(time < stopTimeInSeconds) {
+            return s -1;
+        }
+        s++;
+    }
+
+    return -1;
 };

@@ -61,16 +61,22 @@ function UIMapViewController() {
             layer = new VehiclesPositionSceneController();
             _director.addScene(layer, 12, "vehiclesPositions");
 
+            layer = new VehiclesLabelSceneController();
+            _director.addScene(layer, 15, "vehiclesLabels");
+
+            layer = new StopsSceneController();
+            _director.addScene(layer, 7, "stops");
+
             self.add(_director);
             _director.getView().getCamera().position.z = 5;
             MODEL.getAnimationModel()
-                .setTimeDrivenAnimation(Utils.toSeconds(12, 15, 0)/*Utils.nowToSeconds()*/, Utils.toSeconds(1, 0, 0), 5);
+                .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0), 5);
 
             _director.play(function() {
                 MODEL.getAnimationModel().step();
                 if(MODEL.getAnimationModel().getState() == AnimationState.END) {
                     MODEL.getAnimationModel()
-                        .setTimeDrivenAnimation(Utils.toSeconds(12, 15, 0)/*Utils.nowToSeconds()*/, Utils.toSeconds(1, 0, 0), 5);
+                        .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0), 5);
                 }
                 return false;
             })

@@ -14,7 +14,6 @@ function BusNumbersSceneController() {
     // Text
     var _vehiclesLabelGroup;
     var _vehiclesLabels = {};
-    var _textScene;
 
     /*------------------ PUBLIC METHODS ------------------*/
     /**
@@ -22,10 +21,10 @@ function BusNumbersSceneController() {
      */
     this.update = function() {
         var currentTime = MODEL.getAnimationModel().getTime();
-        MODEL.getCTAModel().getTrips(new Date(), function(json) {
+        MODEL.getCTAModel().getTrips(Utils.now(), function(json) {
             var trips = d3.values(json);
 
-            if(MODEL.getAnimationModel().getState() == AnimationModel.START) {
+            if(MODEL.getAnimationModel().getState() == AnimationState.START) {
 
             } else {
                 for(var tripId in trips) {
@@ -85,16 +84,10 @@ function BusNumbersSceneController() {
             style: "normal",
             size: 7
         });
-        //shape.computeBoundingBox();
-        //var centerOffset = -0.5 * ( shape.boundingBox.max.x - shape.boundingBox.min.x );
 
         var material = new THREE.MeshBasicMaterial({color: color});
         var mesh = new THREE.Mesh(textGeometry, material);
 
-        //var projection = self.project(41.876795, -87.710610);
-
-        //words.position.x = projection.x;
-        //words.position.y = projection.y;
         mesh.rotation.x = Math.PI;
 
         return mesh;
