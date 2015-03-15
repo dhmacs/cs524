@@ -42,7 +42,7 @@ Utils.nowToSeconds = function() {
 Utils.now = function() {
     var now = new Date();
     //now.setHours(13);
-    now.setMinutes(15);
+    //now.setMinutes(15);
     return now;
 };
 

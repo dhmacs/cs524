@@ -94,7 +94,7 @@ function UserLocationSceneController() {
         var locationParticles = new THREE.PointCloud( _geometryBuffer, shaderMaterial );
         self.getScene().add(locationParticles);
 
-        var location = MODEL.getMapModel().project(41.869654, -87.648537);
+        var location = __model.getMapModel().project(41.869654, -87.648537);
         var locationPosition = _geometryBuffer.attributes.position.array;
         var locationColor = _geometryBuffer.attributes.customColor.array;
         var locationSize = _geometryBuffer.attributes.size.array;

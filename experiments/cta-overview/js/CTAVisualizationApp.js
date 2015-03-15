@@ -21,9 +21,11 @@ function CTAVisualizationApp() {
         body
             .style("width", "100%")
             .style("height", "100%");
-        MODEL = new AppModel();
+        __model = new AppModel();
+        __notificationCenter = new NotificationCenter();
         _windowController = new UIWindowController(body.node());
     }();
 }
 
-var MODEL;
+var __model;
+var __notificationCenter;

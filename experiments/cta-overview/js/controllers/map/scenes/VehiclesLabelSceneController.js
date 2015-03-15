@@ -11,75 +11,85 @@ function VehiclesLabelSceneController() {
     /*---------------- PRIVATE ATTRIBUTES ----------------*/
     var self = this;
 
+    var _allTrips = null;
+    var _trips = null;
+    var _needUpdate = false;
+
     // Text
-    var _vehiclesLabelGroup;
+    var _vehiclesLabelGroup = null;
     var _vehiclesLabels = {};
-
-    var _dataAvailable;
-
-    var _trips = {};
 
     /*------------------ PUBLIC METHODS ------------------*/
     /**
      * Update the model of the scene
      */
     this.update = function() {
-        if(_dataAvailable) {
-            var currentTime = Utils.nowToSeconds();
-            MODEL.getCTAModel().getTrips(Utils.now(), function(json) {
-                var trips = d3.values(json);
+        if(_trips != null) {
 
-                if(MODEL.getAnimationModel().getState() == AnimationState.START) {
+            if(__model.getAnimationModel().getState() == AnimationState.START) {
+                _allTrips = __model.getCTAModel().getTrips();
+                _vehiclesLabels = {};
+                updateAnimation();
+                _needUpdate = false;
+            } else {
+                var currentTime = Utils.nowToSeconds();
 
-                } else {
-                    for(var tripId in trips) {
-                        var vehicleData = trips[tripId];
+                for(var tripId in _trips) {
+                    var vehicleData = _trips[tripId];
 
-                        // Compute vehicle last stop
-                        var previousStopIndex = getLastStopIndex(currentTime, vehicleData["stops"]);
+                    // Compute vehicle last stop
+                    var previousStopIndex = getLastStopIndex(currentTime, vehicleData["stops"]);
 
-                        // Compute relevance of the vehicle position (if not relevant then do not display it or use low opacity)
-                        var relevant = vehicleData["stops"][previousStopIndex +1]["relevant"];
-                        relevant = relevant == undefined ? true : relevant;
+                    // Compute relevance of the vehicle position (if not relevant then do not display it or use low opacity)
+                    var relevant = vehicleData["stops"][previousStopIndex +1]["relevant"];
+                    relevant = relevant == undefined ? true : relevant;
 
-                        if(previousStopIndex > -1 && relevant) {
-                            // Compute next stop time in seconds
-                            var next = vehicleData["stops"][previousStopIndex +1]["arrivalTime"];
-                            next = Utils.toSeconds(next.hh, next.mm, next.ss);
+                    if(previousStopIndex > -1 && relevant) {
+                        // Compute next stop time in seconds
+                        var next = vehicleData["stops"][previousStopIndex +1]["arrivalTime"];
+                        next = Utils.toSeconds(next.hh, next.mm, next.ss);
 
-                            // Compute previous stop time in seconds
-                            var previous = vehicleData["stops"][previousStopIndex]["departureTime"];
-                            previous = Utils.toSeconds(previous.hh, previous.mm, previous.ss);
+                        // Compute previous stop time in seconds
+                        var previous = vehicleData["stops"][previousStopIndex]["departureTime"];
+                        previous = Utils.toSeconds(previous.hh, previous.mm, previous.ss);
 
-                            // Compute time passed from the previous stop
-                            var delta = (currentTime - previous) / (next - previous);
-                            var lat = d3.interpolateNumber(
-                                parseFloat(vehicleData["stops"][previousStopIndex]["lat"]),
-                                parseFloat(vehicleData["stops"][previousStopIndex +1]["lat"])
-                            )(delta);
-                            var lon = d3.interpolateNumber(
-                                parseFloat(vehicleData["stops"][previousStopIndex]["lon"]),
-                                parseFloat(vehicleData["stops"][previousStopIndex +1]["lon"])
-                            )(delta);
+                        // Compute time passed from the previous stop
+                        var delta = (currentTime - previous) / (next - previous);
+                        var lat = d3.interpolateNumber(
+                            parseFloat(vehicleData["stops"][previousStopIndex]["lat"]),
+                            parseFloat(vehicleData["stops"][previousStopIndex +1]["lat"])
+                        )(delta);
+                        var lon = d3.interpolateNumber(
+                            parseFloat(vehicleData["stops"][previousStopIndex]["lon"]),
+                            parseFloat(vehicleData["stops"][previousStopIndex +1]["lon"])
+                        )(delta);
 
-                            var projection = MODEL.getMapModel().project(lat, lon);
+                        var projection = __model.getMapModel().project(lat, lon);
 
-                            var tColor = new THREE.Color();
-                            tColor.setStyle("#fff");
+                        var tColor = new THREE.Color();
+                        tColor.setStyle("#fff");
 
-                            if(_vehiclesLabels[tripId] == undefined) {
-                                _vehiclesLabels[tripId] = getLabelMesh(vehicleData["routeId"], tColor);
-                                _vehiclesLabelGroup.add(_vehiclesLabels[tripId]);
-                            }
-                            positionTextMesh(_vehiclesLabels[tripId], projection.x, projection.y);
-                        } else if(_vehiclesLabels[tripId] != undefined) {
-                            _vehiclesLabelGroup.remove(_vehiclesLabels[tripId]);
-                            _vehiclesLabels[tripId] = undefined;
+                        if(_vehiclesLabels[tripId] == undefined) {
+                            _vehiclesLabels[tripId] = getLabelMesh(vehicleData["routeId"], tColor);
+                            _vehiclesLabelGroup.add(_vehiclesLabels[tripId]);
                         }
+                        positionTextMesh(_vehiclesLabels[tripId], projection.x, projection.y);
+                    } else if(_vehiclesLabels[tripId] != undefined) {
+                        _vehiclesLabelGroup.remove(_vehiclesLabels[tripId]);
+                        _vehiclesLabels[tripId] = undefined;
                     }
                 }
-            });
+            }
+        } else if(_needUpdate) {
+            _allTrips = __model.getCTAModel().getTrips();
+            _vehiclesLabels = {};
+            updateAnimation();
+            _needUpdate = false;
         }
+    };
+
+    this.dataUpdated = function() {
+        _needUpdate = true;
     };
 
     /*------------------ PRIVATE METHODS -----------------*/
@@ -128,20 +138,24 @@ function VehiclesLabelSceneController() {
         return -1;
     };
 
-    var init = function () {
+    var updateAnimation = function() {
+        if(_vehiclesLabelGroup != null) {
+            self.getScene().remove(_vehiclesLabelGroup);
+        }
         _vehiclesLabelGroup = new THREE.Group();
         _vehiclesLabelGroup.position.z = 2;
         self.getScene().add(_vehiclesLabelGroup);
-        _dataAvailable = false;
 
-        MODEL.getCTAModel().getTrips(Utils.now(), function(json) {
-            for (var tripId in json) {
-                if (parseInt(json[tripId]["hop"]) == 0) {
-                    _trips[tripId] = json[tripId];
-                }
+        _trips = {};
+        for (var tripId in _allTrips) {
+            if (parseInt(_allTrips[tripId]["hop"]) == 0) {
+                _trips[tripId] = _allTrips[tripId];
             }
-            _dataAvailable = true;
-        });
+        }
+    };
+
+    var init = function () {
+        __notificationCenter.subscribe(self, self.dataUpdated, Notifications.CTA.TRIPS_UPDATED);
     }();
 }
 

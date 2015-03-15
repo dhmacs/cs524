@@ -12,9 +12,33 @@ function CTAModel() {
     var _trips = null;
     var _requesting;
 
+    var _updateTimer;
+    var _updateIntervalMillis = 60000; // Update every minute
+
     /*------------------ PUBLIC METHODS ------------------*/
+    /**
+     *
+     */
+    this.startUpdates = function() {
+        self.updateData();
+        _updateTimer = setInterval(self.updateData, _updateIntervalMillis);
+    };
 
+    /**
+     *
+     */
+    this.stopUpdates = function() {
+        clearInterval(_updateTimer);
+    };
 
+    /**
+     *
+     * @returns {*}
+     */
+    this.getTrips = function() {
+        return _trips;
+    };
+    /*
     this.getTrips = function(time, handler) {
         if(_trips == null) {
             var request = "http://127.0.0.1:3000/api/stops/6627/";
@@ -32,6 +56,24 @@ function CTAModel() {
         } else {
             handler(_trips);
         }
+    };*/
+
+    this.updateData = function() {
+        var request = "http://127.0.0.1:3000/api/stops/6627/";
+        var time = Utils.now();
+
+        request +=
+            (time.getHours() < 10 ? "0" : "") + time.getHours() + ":" +
+            (time.getMinutes() < 10 ? "0" : "") + time.getMinutes() + ":" +
+            (time.getSeconds() < 10 ? "0" : "") + time.getSeconds();
+
+        console.log("REQUEST: " + request);
+        console.time("RequestTime");
+        d3.json(request, function(json) {
+            console.timeEnd("RequestTime");
+            _trips = json;
+            __notificationCenter.dispatch(Notifications.CTA.TRIPS_UPDATED);
+        });
     };
 
     /*------------------ PRIVATE METHODS -----------------*/

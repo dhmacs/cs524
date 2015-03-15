@@ -11,7 +11,11 @@ function TrailsSceneController() {
     /*---------------- PRIVATE ATTRIBUTES ----------------*/
     var self = this;
 
+    var _trips = null;
+    var _needUpdate = false;
+
     var _geometryBuffer;
+    var _mesh = null;
 
     // Animation settings
     var _trailLength = 400;
@@ -29,22 +33,23 @@ function TrailsSceneController() {
      * Update the model of the scene
      */
     this.update = function() {
-        var currentTime = MODEL.getAnimationModel().getTime();
-        MODEL.getCTAModel().getTrips(Utils.now(), function(json) {
-            var trips = d3.values(json);
+        if(_trips != null) {
 
-            var size = _geometryBuffer.attributes.size.array;
-            var position = _geometryBuffer.attributes.position.array;
-            var color = _geometryBuffer.attributes.customColor.array;
-            var opacity = _geometryBuffer.attributes.vertexOpacity.array;
-
-            if(MODEL.getAnimationModel().getState() == AnimationState.START) {
-                for(var i = 0; i < size.length; i++) {
-                    size[i] = 0;
-                    opacity[i] = 1;
-                }
+            if(__model.getAnimationModel().getState() == AnimationState.START) {
+                _trips = __model.getCTAModel().getTrips();
+                updateAnimation();
+                _needUpdate = false;
             } else {
-                i = 0;
+                //var trips = d3.values(_trips);
+                var currentTime = __model.getAnimationModel().getTime();
+
+                var size = _geometryBuffer.attributes.size.array;
+                var position = _geometryBuffer.attributes.position.array;
+                var color = _geometryBuffer.attributes.customColor.array;
+                var opacity = _geometryBuffer.attributes.vertexOpacity.array;
+
+
+                var i = 0;
                 for(; i < size.length; i++) {
                     if(size[i] == _headSize) {
                         size[i] = _maxTrailSize;
@@ -57,8 +62,8 @@ function TrailsSceneController() {
                     opacity[i] = opacity[i] > _minOpacity ? opacity[i] - _deltaOpacity : _minOpacity;
                 }
 
-                for(var tripId in trips) {
-                    var vehicleData = trips[tripId];
+                for(var tripId in _trips) {
+                    var vehicleData = _trips[tripId];
 
                     // Compute vehicle last stop
                     var previousStopIndex = getLastStopIndex(currentTime, vehicleData["stops"]);
@@ -87,7 +92,7 @@ function TrailsSceneController() {
                             parseFloat(vehicleData["stops"][previousStopIndex +1]["lon"])
                         )(delta);
 
-                        var projection = MODEL.getMapModel().project(lat, lon);
+                        var projection = __model.getMapModel().project(lat, lon);
 
                         i = 0;
                         while(i < size.length && size[i] > 0) {
@@ -118,12 +123,75 @@ function TrailsSceneController() {
             _geometryBuffer.attributes.size.needsUpdate = true;
             _geometryBuffer.attributes.customColor.needsUpdate = true;
             _geometryBuffer.attributes.vertexOpacity.needsUpdate = true;
-        });
+        } else if(_needUpdate) {
+            _trips = __model.getCTAModel().getTrips();
+            updateAnimation();
+            _needUpdate = false;
+        }
+    };
+
+    this.dataUpdated = function() {
+        _needUpdate = true;
     };
 
 
-
     /*------------------ PRIVATE METHODS -----------------*/
+    var updateAnimation = function() {
+        // Initialize WebGL variables
+        var attributes = {
+            size: {	type: 'f', value: [] },
+            customColor: { type: 'c', value: [] },
+            vertexOpacity: { type: 'f', value: [] }
+        };
+
+        var uniforms = {
+            texture:   { type: "t", value: Utils.gl.circleTexture() }
+        };
+
+        var shaderMaterial = new THREE.ShaderMaterial( {
+            uniforms:       uniforms,
+            attributes:     attributes,
+            vertexShader:   document.getElementById( 'vertexshader' ).textContent,
+            fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
+
+            //blending:       THREE.AdditiveBlending,
+            depthTest:      false,
+            transparent:    true,
+            sizeAttenuation: false,
+            vertexColors: THREE.VertexColors
+        });
+
+        // Handling trails
+        var trips = d3.values(_trips);
+
+        _geometryBuffer = new THREE.BufferGeometry();
+        var buffer = new Float32Array(trips.length * _trailLength * 3);
+        _geometryBuffer.addAttribute('position', new THREE.BufferAttribute(buffer, 3));
+        buffer = new Float32Array(trips.length * _trailLength * 3);
+        _geometryBuffer.addAttribute('customColor', new THREE.BufferAttribute(buffer, 3));
+        buffer = new Float32Array(trips.length * _trailLength);
+        _geometryBuffer.addAttribute('size', new THREE.BufferAttribute(buffer, 1));
+        buffer = new Float32Array(trips.length * _trailLength);
+        _geometryBuffer.addAttribute('vertexOpacity', new THREE.BufferAttribute(buffer, 1));
+
+        if(_mesh != null) {
+            self.getScene().remove(_mesh);
+        }
+        _mesh = new THREE.PointCloud( _geometryBuffer, shaderMaterial );
+
+
+        var size = _geometryBuffer.attributes.size.array;
+        var opacity = _geometryBuffer.attributes.vertexOpacity.array;
+
+        for(var i = 0; i < size.length; i++) {
+            size[i] = 0;
+            opacity[i] = 1;
+        }
+
+        self.getScene().add(_mesh);
+    };
+
+
     var getLastStopIndex = function(time, stops) {
         var s = 0;
         var stopTimeInSeconds;
@@ -145,61 +213,7 @@ function TrailsSceneController() {
     };
 
     var init = function () {
-        MODEL.getCTAModel().getTrips(Utils.now(), function(json) {
-
-            // Initialize WebGL variables
-            var attributes = {
-                size: {	type: 'f', value: [] },
-                customColor: { type: 'c', value: [] },
-                vertexOpacity: { type: 'f', value: [] }
-            };
-
-            var texture = THREE.ImageUtils.loadTexture( "img/circle.png" );
-            texture.minFilter = THREE.LinearFilter;
-
-            var uniforms = {
-                texture:   { type: "t", value: /*THREE.ImageUtils.loadTexture( "img/circle.png" )*/texture }
-            };
-
-            var shaderMaterial = new THREE.ShaderMaterial( {
-                uniforms:       uniforms,
-                attributes:     attributes,
-                vertexShader:   document.getElementById( 'vertexshader' ).textContent,
-                fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
-
-                //blending:       THREE.AdditiveBlending,
-                depthTest:      false,
-                transparent:    true,
-                sizeAttenuation: false,
-                vertexColors: THREE.VertexColors
-            });
-
-            // Handling trails
-            var trips = d3.values(json);
-
-            _geometryBuffer = new THREE.BufferGeometry();
-            var buffer = new Float32Array(trips.length * _trailLength * 3);
-            _geometryBuffer.addAttribute('position', new THREE.BufferAttribute(buffer, 3));
-            buffer = new Float32Array(trips.length * _trailLength * 3);
-            _geometryBuffer.addAttribute('customColor', new THREE.BufferAttribute(buffer, 3));
-            buffer = new Float32Array(trips.length * _trailLength);
-            _geometryBuffer.addAttribute('size', new THREE.BufferAttribute(buffer, 1));
-            buffer = new Float32Array(trips.length * _trailLength);
-            _geometryBuffer.addAttribute('vertexOpacity', new THREE.BufferAttribute(buffer, 1));
-            var mesh = new THREE.PointCloud( _geometryBuffer, shaderMaterial );
-
-
-            var size = _geometryBuffer.attributes.size.array;
-            var opacity = _geometryBuffer.attributes.vertexOpacity.array;
-
-            for(var i = 0; i < size.length; i++) {
-                size[i] = 0;
-                opacity[i] = 1;
-            }
-
-            self.getScene().add(mesh);
-
-        });
+        __notificationCenter.subscribe(self, self.dataUpdated, Notifications.CTA.TRIPS_UPDATED);
     }();
 }
 

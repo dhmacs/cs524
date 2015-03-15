@@ -52,8 +52,12 @@ function UIMapViewController() {
             layer = new TrailsSceneController();
             _director.addScene(layer, 6, "trails");
 
+
             layer = new BusNumbersSceneController();
             _director.addScene(layer, 9, "numbers");
+
+            layer = new StopsSceneController();
+            _director.addScene(layer, 7, "stops");
 
             layer = new ConnectionsSceneController();
             _director.addScene(layer, 3, "connections");
@@ -64,18 +68,18 @@ function UIMapViewController() {
             layer = new VehiclesLabelSceneController();
             _director.addScene(layer, 15, "vehiclesLabels");
 
-            layer = new StopsSceneController();
-            _director.addScene(layer, 7, "stops");
+            // Start cta model updates
+            __model.getCTAModel().startUpdates();
 
             self.add(_director);
             _director.getView().getCamera().position.z = 5;
-            MODEL.getAnimationModel()
+            __model.getAnimationModel()
                 .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0), 5);
 
             _director.play(function() {
-                MODEL.getAnimationModel().step();
-                if(MODEL.getAnimationModel().getState() == AnimationState.END) {
-                    MODEL.getAnimationModel()
+                __model.getAnimationModel().step();
+                if(__model.getAnimationModel().getState() == AnimationState.END) {
+                    __model.getAnimationModel()
                         .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0), 5);
                 }
                 return false;

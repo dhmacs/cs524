@@ -11,8 +11,11 @@ function BusNumbersSceneController() {
     /*---------------- PRIVATE ATTRIBUTES ----------------*/
     var self = this;
 
+    var _trips = null;
+    var _needUpdate = false;
+
     // Text
-    var _vehiclesLabelGroup;
+    var _vehiclesLabelGroup = null;
     var _vehiclesLabels = {};
 
     /*------------------ PUBLIC METHODS ------------------*/
@@ -20,15 +23,18 @@ function BusNumbersSceneController() {
      * Update the model of the scene
      */
     this.update = function() {
-        var currentTime = MODEL.getAnimationModel().getTime();
-        MODEL.getCTAModel().getTrips(Utils.now(), function(json) {
-            var trips = d3.values(json);
+        var currentTime = __model.getAnimationModel().getTime();
+        if(_trips != null) {
+            //var trips = d3.values(_trips);
 
-            if(MODEL.getAnimationModel().getState() == AnimationState.START) {
-
+            if(__model.getAnimationModel().getState() == AnimationState.START) {
+                _trips = __model.getCTAModel().getTrips();
+                _vehiclesLabels = {};
+                updateAnimation();
+                _needUpdate = false;
             } else {
-                for(var tripId in trips) {
-                    var vehicleData = trips[tripId];
+                for(var tripId in _trips) {
+                    var vehicleData = _trips[tripId];
 
                     // Compute vehicle last stop
                     var previousStopIndex = getLastStopIndex(currentTime, vehicleData["stops"]);
@@ -57,7 +63,7 @@ function BusNumbersSceneController() {
                             parseFloat(vehicleData["stops"][previousStopIndex +1]["lon"])
                         )(delta);
 
-                        var projection = MODEL.getMapModel().project(lat, lon);
+                        var projection = __model.getMapModel().project(lat, lon);
 
                         var tColor = new THREE.Color();
                         tColor.setStyle("#fff");
@@ -73,7 +79,16 @@ function BusNumbersSceneController() {
                     }
                 }
             }
-        });
+        } else if(_needUpdate) {
+            _trips = __model.getCTAModel().getTrips();
+            _vehiclesLabels = {};
+            updateAnimation();
+            _needUpdate = false;
+        }
+    };
+
+    this.dataUpdated = function() {
+        _needUpdate = true;
     };
 
     /*------------------ PRIVATE METHODS -----------------*/
@@ -123,10 +138,18 @@ function BusNumbersSceneController() {
     };
 
 
-    var init = function () {
+    var updateAnimation = function() {
+        if(_vehiclesLabelGroup != null) {
+            self.getScene().remove(_vehiclesLabelGroup);
+        }
         _vehiclesLabelGroup = new THREE.Group();
         _vehiclesLabelGroup.position.z = 2;
         self.getScene().add(_vehiclesLabelGroup);
+    };
+
+
+    var init = function () {
+        __notificationCenter.subscribe(self, self.dataUpdated, Notifications.CTA.TRIPS_UPDATED);
     }();
 }
 

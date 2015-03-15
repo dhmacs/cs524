@@ -19,7 +19,7 @@ function UIWindowController(htmlContainer) {
      * @returns {*}
      */
     this.getModel = function() {
-        return MODEL;
+        return __model;
     };
 
 
