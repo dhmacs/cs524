@@ -5,6 +5,7 @@
  * @author Massimo De Marchi
  * @created 3/9/15.
  */
+console.log("UserLocationSceneController");
 function UserLocationSceneController() {
     SceneController.call(this);
 
@@ -13,19 +14,19 @@ function UserLocationSceneController() {
 
     var _geometryBuffer;
 
-    var _circlesNumber = 3;
+    var _circlesNumber = 2;
 
     var _circlesOpacities = {
-        max: 1.0,
-        min: 0
+        max: 0.7,
+        min: 0.2
     };
 
     var _circleSizes = {
-        max: 80,
-        min: 20
+        max: 100,
+        min: 10
     };
 
-    var _locationAnimationIncrement = 0.005;
+    var _locationAnimationIncrement = 0.002;
 
     /*------------------ PUBLIC METHODS ------------------*/
     /**
@@ -37,13 +38,16 @@ function UserLocationSceneController() {
         var locationSize = _geometryBuffer.attributes.size.array;
         var locationOpacity = _geometryBuffer.attributes.vertexOpacity.array;
 
-        for(var i = 0; i < _circlesNumber; i++) {
-            if(locationOpacity[i] < _circlesOpacities.max) {
-                locationOpacity[i] += _locationAnimationIncrement;
+        for(var i = 1; i < _circlesNumber; i++) {
+            if(locationOpacity[i] > _circlesOpacities.min) {
+                locationOpacity[i] -= _locationAnimationIncrement;
+                locationOpacity[i] = locationOpacity[i] < 0 ? 0 : locationOpacity[i];
             } else {
-                locationOpacity[i] = _circlesOpacities.min;
+                locationOpacity[i] = _circlesOpacities.max;
             }
-            locationSize[i] = (_circlesOpacities.max - locationOpacity[i]) * 100 + _circleSizes.min;
+            locationSize[i] =
+                (1 - ((locationOpacity[i] - _circlesOpacities.min) /
+                (_circlesOpacities.max - _circlesOpacities.min))) * (_circleSizes.max - _circleSizes.min) + _circleSizes.min;
         }
 
         _geometryBuffer.attributes.position.needsUpdate = true;
@@ -111,8 +115,12 @@ function UserLocationSceneController() {
             locationColor[i * 3 +1] = tmpColor.g;
             locationColor[i * 3 +2] = tmpColor.b;
 
-            locationOpacity[i] = (1 / _circlesNumber) * i;
-            locationSize[i] = (_circlesOpacities.max - locationOpacity[i]) * 100 + _circleSizes.min;
+            if(i == 0) {
+                locationOpacity[i] = 1.0;
+            } else {
+                locationOpacity[i] = _circlesOpacities.max;
+            }
+            locationSize[i] = _circleSizes.min;
         }
     }();
 }

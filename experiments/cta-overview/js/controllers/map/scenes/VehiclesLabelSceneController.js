@@ -98,7 +98,7 @@ function VehiclesLabelSceneController() {
             font: 'helvetiker',
             //weight: "regular",
             style: "normal",
-            size: 7
+            size: 6
         });
 
         var material = new THREE.MeshBasicMaterial({color: color});

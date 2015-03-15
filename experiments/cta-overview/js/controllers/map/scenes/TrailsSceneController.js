@@ -19,7 +19,7 @@ function TrailsSceneController() {
 
     // Animation settings
     var _trailLength = 400;
-    var _headSize = 40;
+    var _headSize = 30;
     var _maxTrailSize = 7;
     var _minTrailSize = 4;
     var _decrementPerFrame = 0.02;

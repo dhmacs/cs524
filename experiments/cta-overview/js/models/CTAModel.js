@@ -59,7 +59,7 @@ function CTAModel() {
     };*/
 
     this.updateData = function() {
-        var request = "http://127.0.0.1:3000/api/stops/6627/";
+        var request = "http://127.0.0.1:3000/api/stops/41.869621/-87.648757/500/";
         var time = Utils.now();
 
         request +=

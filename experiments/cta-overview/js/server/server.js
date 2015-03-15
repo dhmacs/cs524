@@ -135,12 +135,44 @@ app.get('/api/stops/:id', function(req,res) {
     res.send(data);
 });
 
-app.get('/api/stops/:id/:time', function(req,res){
+app.get('/api/stops/:lat/:lon/:radius', function(req,res){
+    var graph = app.locals.ctaGraph;
+
+    var lat = req.params.lat;
+    var lon = req.params.lon;
+    var radius = req.params.radius;
+
+    var result = {};
+
+    var stopIds = graph.getNodesIds();
+    stopIds.forEach(function(stopId) {
+        var stopData = graph.getNodeData(stopId);
+        var delta = {
+            lat: Math.abs(stopData.stopLatitude - lat),
+            lon: Math.abs(stopData.stopLongitude - lon)
+        };
+
+        delta.x = (delta.lat * 40008000) / 360;
+        delta.y = (delta.lon * 40075160 * Math.cos(lat) / 360);
+
+        var distance = Math.sqrt(Math.pow(delta.x, 2) + Math.pow(delta.y, 2));
+
+        //var delta = Math.sqrt(Math.pow(stopData.stopLatitude - lat, 2) + Math.pow(stopData.stopLongitude - lon, 2));
+        if(distance < radius) {
+            console.log(delta.lat + " " + delta.lon);
+            result[stopId] = stopData;
+        }
+    });
+
+    res.send(result);
+});
+
+app.get('/api/stops/:lat/:lon/:radius/:time', function(req,res){
     var graph = app.locals.ctaGraph;
     var trips = app.locals.trips;
-    var routes = app.locals.routes;
 
-    var id = req.params.id;
+
+    //var id = req.params.id;
     var time = req.params.time;
     console.log("TIME= " + time);
 
@@ -152,66 +184,122 @@ app.get('/api/stops/:id/:time', function(req,res){
         duration: ds.timeToSeconds(0, 15, 0) // 15 minutes
     };
 
+    var lat = req.params.lat;
+    var lon = req.params.lon;
+    var radius = req.params.radius;
+
     console.time("acc");
 
+    var availableTripsIds = [];
+    var nearbyIds = getNearbyStopIds(lat, lon, radius);
+
+    nearbyIds.forEach(function(nearbyStopId) {
+        // Given a stopId show the available trips
+        availableTripsIds = availableTripsIds.concat(getAvailableTripsIds(nearbyStopId, interval));
+    });
+
     // Given a stopId show the available trips
-    var availableTripsIds = getAvailableTripsIds(id, interval);
+    //var availableTripsIds = getAvailableTripsIds(id, interval);
     var result = {};
 
     availableTripsIds.forEach(function(tripId) {
-        result[tripId] = _.extend({}, trips[tripId]);   // The purpose of this instruction is to clone trips[tripId]
-        result[tripId].hop = 0;
+        var routeId = trips[tripId].routeId;
+        var directionId = trips[tripId].directionId;
 
-        var currentTripUserStopIndex = _.findIndex(result[tripId]["stops"], {stopId: id});
-        // Filter stops previous to the stop nearby the user
-        _.filter(result[tripId]["stops"], function(stop) {
-            // Side effect
-            var node = graph.getNodeData(stop["stopId"]);
-            stop.lat = node.stopLatitude;
-            stop.lon = node.stopLongitude;
+        var similarTrips = findSameRoutesAndDirection(result, routeId, directionId);
 
-            // Filter stops before the location of the user
-            return _.findIndex(result[tripId]["stops"], {stopId: stop["stopId"]}) > currentTripUserStopIndex;
-        }).forEach(function(stop) { // For each stop look for connections with other vehicles
-            stop.transfers = [];
-            var transferInterval = {
-                start: ds.timeToSeconds(stop["arrivalTime"]["hh"], stop["arrivalTime"]["mm"], stop["arrivalTime"]["ss"]),
-                duration: ds.timeToSeconds(0, 15, 0) /*15 minutes*/
-            };
-            if(transferInterval.start > interval.start) {
-                var availableTransfers = _.filter(getAvailableTripsIds(stop["stopId"], transferInterval), function(id) {
-                    return id != tripId;
-                });
+        if(result[tripId] == undefined && similarTrips.length == 0) {
+            result[tripId] = _.extend({}, trips[tripId]);   // The purpose of this instruction is to clone trips[tripId]
+            result[tripId].hop = 0;
 
-                availableTransfers.forEach(function(transferId) {
-                    var transferRouteId = trips[transferId].routeId;
-                    var transferDirectionId = trips[transferId].directionId;
+            var tripNearbyStops = _.filter(result[tripId]["stops"], function(stop) {
+                return _.contains(nearbyIds, stop.stopId);
+            });
 
-                    var similarTrips = findSameRoutesAndDirection(result, transferRouteId, transferDirectionId);
+            var firstRelevantStopSequenceNumber = _.min(tripNearbyStops, function(stop) {
+                return stop.stopSequence;
+            });
 
-                    if(result[transferId] == undefined && similarTrips.length == 0) {
-                        result[transferId] = _.extend({}, trips[transferId]);
-                        result[transferId].hop = 1;
-                        var connectionStopIndex = _.findIndex(result[transferId]["stops"], {stopId: stop["stopId"]});
-                        result[transferId]["stops"].forEach(function(transferStop, stopIndex) {
-                            var node = graph.getNodeData(transferStop["stopId"]);
-                            transferStop.lat = node.stopLatitude;
-                            transferStop.lon = node.stopLongitude;
-                            if(stopIndex >= connectionStopIndex) {
-                                transferStop.relevant = true;
-                            } else if(stop.relevant == undefined) {
-                                transferStop.relevant = false;
-                            }
-                        });
-                        stop.transfers.push(transferId);
-                    }
-                });
-            }
-        });
+            var currentTripUserStopIndex = _.findIndex(result[tripId]["stops"], {stopSequence: firstRelevantStopSequenceNumber});
+
+            // Filter stops previous to the stop nearby the user
+            _.filter(result[tripId]["stops"], function(stop) {
+                // Side effect
+                var node = graph.getNodeData(stop["stopId"]);
+                stop.lat = node.stopLatitude;
+                stop.lon = node.stopLongitude;
+
+                // Filter stops before the location of the user
+                return _.findIndex(result[tripId]["stops"], {stopId: stop["stopId"]}) > currentTripUserStopIndex;
+            }).forEach(function(stop) { // For each stop look for connections with other vehicles
+                stop.transfers = [];
+                var transferInterval = {
+                    start: ds.timeToSeconds(stop["arrivalTime"]["hh"], stop["arrivalTime"]["mm"], stop["arrivalTime"]["ss"]),
+                    duration: ds.timeToSeconds(0, 15, 0) /*15 minutes*/
+                };
+                if(transferInterval.start > interval.start) {
+                    var availableTransfers = _.filter(getAvailableTripsIds(stop["stopId"], transferInterval), function(id) {
+                        return id != tripId;
+                    });
+
+                    availableTransfers.forEach(function(transferId) {
+                        var transferRouteId = trips[transferId].routeId;
+                        var transferDirectionId = trips[transferId].directionId;
+
+                        var similarTrips = findSameRoutesAndDirection(result, transferRouteId, transferDirectionId);
+
+                        if(result[transferId] == undefined && similarTrips.length == 0) {
+                            result[transferId] = _.extend({}, trips[transferId]);
+                            result[transferId].hop = 1;
+                            var connectionStopIndex = _.findIndex(result[transferId]["stops"], {stopId: stop["stopId"]});
+                            result[transferId]["stops"].forEach(function(transferStop, stopIndex) {
+                                var node = graph.getNodeData(transferStop["stopId"]);
+                                transferStop.lat = node.stopLatitude;
+                                transferStop.lon = node.stopLongitude;
+                                if(stopIndex >= connectionStopIndex) {
+                                    transferStop.relevant = true;
+                                } else if(stop.relevant == undefined) {
+                                    transferStop.relevant = false;
+                                }
+                            });
+                            stop.transfers.push(transferId);
+                        }
+                    });
+                }
+            });
+        }
     });
 
     res.send(result);
 });
+
+var getNearbyStopIds = function(lat, lon, radius) {
+    var graph = app.locals.ctaGraph;
+
+    var result = [];
+
+    var stopIds = graph.getNodesIds();
+    stopIds.forEach(function(stopId) {
+        var stopData = graph.getNodeData(stopId);
+        var delta = {
+            lat: Math.abs(stopData.stopLatitude - lat),
+            lon: Math.abs(stopData.stopLongitude - lon)
+        };
+
+        delta.x = (delta.lat * 40008000) / 360;
+        delta.y = (delta.lon * 40075160 * Math.cos(lat) / 360);
+
+        var distance = Math.sqrt(Math.pow(delta.x, 2) + Math.pow(delta.y, 2));
+
+        //var delta = Math.sqrt(Math.pow(stopData.stopLatitude - lat, 2) + Math.pow(stopData.stopLongitude - lon, 2));
+        if(distance < radius) {
+            console.log(delta.lat + " " + delta.lon);
+            result.push(stopId);
+        }
+    });
+
+    return result;
+};
 
 var findSameRoutesAndDirection = function(dictionary, routeId, directionId) {
     var trips = app.locals.trips;
@@ -237,17 +325,15 @@ var getAvailableTripsIds = function(nodeId, interval) {
 
     var ids = [];
 
-    console.log(interval);
-
+    console.log("StopId-> " +  nodeId);
     var neighbors = graph.getNeighbors(nodeId);
-    console.log("neighbors= " + neighbors);
+
     neighbors.forEach(function(neighborId) {
         _.filter(graph.getEdges(nodeId, neighborId), function(edge) {
             // Departure time from nodeId should be within the interval
             var departureTimeInSeconds = ds.timeToSeconds(edge.fromTime.hh, edge.fromTime.mm, edge.fromTime.ss);
             return departureTimeInSeconds >= interval.start && departureTimeInSeconds < (interval.start + interval.duration);
         }).forEach(function(edge) {
-            console.log(edge);
             ids.push(edge.tripId);
         });
     });

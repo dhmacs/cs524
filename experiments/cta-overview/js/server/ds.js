@@ -44,7 +44,10 @@
             return _nodes[nodeId];
         };
         self.getNeighbors = function(nodeId) {
-            return Object.keys(_edges[nodeId]);
+            if(_edges[nodeId] != undefined) {
+                return Object.keys(_edges[nodeId]);
+            }
+            return [];
         }
     }
     ds.timeToSeconds = function(hours, minutes, seconds) {

@@ -28,8 +28,8 @@ function VehiclesPositionSceneController() {
     };
 
     var _vehicleSizes = {
-        max: 40,
-        min: 40
+        max: 30,
+        min: 30
     };
 
     var _animationIncrement = 0.002;
@@ -66,6 +66,7 @@ function VehiclesPositionSceneController() {
 
                 var size = _geometryBuffer.attributes.size.array;
                 var position = _geometryBuffer.attributes.position.array;
+                var color = _geometryBuffer.attributes.customColor.array;
                 var opacity = _geometryBuffer.attributes.vertexOpacity.array;
 
                 for(var tripId in _trips) {
@@ -105,9 +106,9 @@ function VehiclesPositionSceneController() {
 
 
                         for(var j = 0; j < _circlesNumber; j++) {
-                            position[bufferIndex + (j * 3)] = projection.x;
-                            position[bufferIndex + (j * 3) +1] = projection.y;
-                            position[bufferIndex + (j * 3) +2] = 1;
+                            position[bufferIndex * 3  + (j * 3)] = projection.x;
+                            position[bufferIndex * 3 + (j * 3) +1] = projection.y;
+                            position[bufferIndex * 3 + (j * 3) +2] = 1;
 
                             if(opacity[bufferIndex + j] >= _circlesOpacities.max) {
                                 _vehiclesBufferMapping[tripId].delta = -_animationIncrement;
@@ -117,7 +118,7 @@ function VehiclesPositionSceneController() {
 
                             opacity[bufferIndex + j] += _vehiclesBufferMapping[tripId].delta;
 
-                            size[j] = _vehicleSizes.max;
+                            size[bufferIndex + j] = _vehicleSizes.max;
                                 /*
                                 (_circlesOpacities.max - opacity[bufferIndex + j]) *
                                 (_vehicleSizes.max - _vehicleSizes.min)
@@ -203,13 +204,13 @@ function VehiclesPositionSceneController() {
 
         for(var i = 0; i < trips.length; i++) {
             for(var j = 0; j < _circlesNumber; j++) {
-                size[i + j] = 0;
-                opacity[i + j] =
+                size[i * _circlesNumber + j] = 0;
+                opacity[i * _circlesNumber + j] =
                     (((_circlesOpacities.max - _circlesOpacities.min) / _circlesNumber) * j) + _circlesOpacities.min;
 
-                color[i + (j * 3)] = tColor.r;
-                color[i + (j * 3) +1] = tColor.g;
-                color[i + (j * 3) +2] = tColor.b;
+                color[i * _circlesNumber * 3 + (j * 3)] = tColor.r;
+                color[i * _circlesNumber * 3 + (j * 3) +1] = tColor.g;
+                color[i * _circlesNumber * 3 + (j * 3) +2] = tColor.b;
             }
         }
 

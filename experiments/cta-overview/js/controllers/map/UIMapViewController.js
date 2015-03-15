@@ -46,7 +46,10 @@ function UIMapViewController() {
 
             _director = new DirectorViewController();
 
-            var layer = new UserLocationSceneController();
+            var layer;
+
+
+            layer = new UserLocationSceneController();
             _director.addScene(layer, 0, "location");
 
             layer = new TrailsSceneController();
