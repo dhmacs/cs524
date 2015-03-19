@@ -20,7 +20,7 @@ function ConnectionsSceneController() {
     var _transfers = {};
 
     var _connectionSize = 20;
-    var _connectionOpacity = 0.7;
+    var _connectionOpacity = 0.9;
 
     /*------------------ PUBLIC METHODS ------------------*/
     /**

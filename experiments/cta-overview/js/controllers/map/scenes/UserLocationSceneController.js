@@ -22,7 +22,7 @@ function UserLocationSceneController() {
     };
 
     var _circleSizes = {
-        max: 100,
+        max: 120,
         min: 10
     };
 

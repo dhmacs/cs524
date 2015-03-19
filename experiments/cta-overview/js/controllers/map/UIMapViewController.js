@@ -48,7 +48,6 @@ function UIMapViewController() {
 
             var layer;
 
-
             layer = new UserLocationSceneController();
             _director.addScene(layer, 0, "location");
 
@@ -74,16 +73,18 @@ function UIMapViewController() {
             // Start cta model updates
             __model.getCTAModel().startUpdates();
 
+            var animationStep = 3;
+
             self.add(_director);
             _director.getView().getCamera().position.z = 5;
             __model.getAnimationModel()
-                .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0), 5);
+                .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0), animationStep);
 
             _director.play(function() {
                 __model.getAnimationModel().step();
                 if(__model.getAnimationModel().getState() == AnimationState.END) {
                     __model.getAnimationModel()
-                        .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0), 5);
+                        .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0), animationStep);
                 }
                 return false;
             })

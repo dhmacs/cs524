@@ -67,6 +67,8 @@ function CTAModel() {
             (time.getMinutes() < 10 ? "0" : "") + time.getMinutes() + ":" +
             (time.getSeconds() < 10 ? "0" : "") + time.getSeconds();
 
+        request += "/15";
+
         console.log("REQUEST: " + request);
         console.time("RequestTime");
         d3.json(request, function(json) {

@@ -23,8 +23,8 @@ function TrailsSceneController() {
     var _maxTrailSize = 7;
     var _minTrailSize = 4;
     var _decrementPerFrame = 0.02;
-    var _minOpacity = 0.2;
-    var _maxOpacity = 0.6;
+    var _minOpacity = 0.1;
+    var _maxOpacity = 0.7;
     var _deltaOpacity = 0.03;
 
     /*------------------ PUBLIC METHODS ------------------*/
