@@ -336,7 +336,6 @@ var distance = function(locationA, locationB) {
  * return []
  */
 var findTripsIds = function(area, timeRange) {
-    var trips = app.locals.trips;
     var graph = app.locals.ctaGraph;
 
     var result = [];
@@ -351,26 +350,21 @@ var findTripsIds = function(area, timeRange) {
     });
 
     // Get available trips
-    var availableTrips = stopsIdsInArea.reduce(function(previousValue, currentStopId, index, array) {
-        //prevStop = graph.getNodeData(array[previousValue].stopId);
-        //currentStop = graph.getNodeData(array[index].stopId);
+    var availableTrips = stopsIdsInArea.reduce(function(previousValue, currentStopId) {
         var neighborsIds = graph.getNeighbors(currentStopId);
-        var tripIds = neighborsIds.map(function(currentNeighborId, i, arr) {
+        var tripIds = neighborsIds.map(function(currentNeighborId) {
             // Return an Array of trip Ids for the current currentStopId-currentNeighborId pair
             return graph.getEdges(currentStopId, currentNeighborId)
                 .filter(function(edge) {
                     var departure = ds.timeToSeconds(edge.fromTime.hh, edge.fromTime.mm, edge.fromTime.ss);
                     var minTime = ds.timeToSeconds(timeRange.start.hh, timeRange.start.mm, timeRange.start.ss);
-                    var maxTime = ds.timeToSeconds(
-                        timeRange.start.hh + timeRange.duration.hh,
-                        timeRange.start.mm + timeRange.duration.mm,
-                        timeRange.start.ss + timeRange.duration.ss
-                    );
+                    var maxTime = minTime + ds.timeToSeconds(timeRange.duration.hh, timeRange.duration.mm, timeRange.duration.ss);
+
                     return departure > minTime && departure <= maxTime;
                 }).map(function(edge) {
                     return edge.tripId;
                 });
-        }).reduce(function(pValue, cValue, j, arrayb) {
+        }).reduce(function(pValue, cValue) {
             return pValue.concat(cValue);
         }, []);
 
@@ -448,7 +442,7 @@ var findFeasibleRides = function(departureOptions, transfersOptions, selectionOp
     var result = {};
 
     if(maxNumberOfTransfers == 0)
-        return;
+        return {};
 
     /**/
     var nearbyTripsIds = findTripsIds(departureOptions.area, departureOptions.timeRange);
