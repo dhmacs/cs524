@@ -14,3 +14,7 @@ Notifications.CTA = {
     //whenever a map change its position / zoom
     TRIPS_UPDATED: "com.TransitVis.cta.tripsUpdated"
 };
+
+Notifications.Animation = {
+    ANIMATION_STEP: "com.TransitVis.Animation.AnimationStep"
+};

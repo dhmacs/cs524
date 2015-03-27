@@ -26,60 +26,15 @@ function VehiclesLabelSceneController() {
     this.update = function() {
         if(_trips != null) {
 
-            if(__model.getAnimationModel().getState() == AnimationState.START) {
+            if(__model.getAnimationModel().getState() == AnimationState.START && _needUpdate) {
                 _allTrips = __model.getCTAModel().getTrips();
                 _vehiclesLabels = {};
                 updateAnimation();
                 _needUpdate = false;
             } else {
-                var currentTime = Utils.nowToSeconds();
 
-                for(var tripId in _trips) {
-                    var vehicleData = _trips[tripId];
-
-                    // Compute vehicle last stop
-                    var previousStopIndex = getLastStopIndex(currentTime, vehicleData["stops"]);
-
-                    // Compute relevance of the vehicle position (if not relevant then do not display it or use low opacity)
-                    var relevant = vehicleData["stops"][previousStopIndex +1]["relevant"];
-                    relevant = relevant == undefined ? true : relevant;
-
-                    if(previousStopIndex > -1 && relevant) {
-                        // Compute next stop time in seconds
-                        var next = vehicleData["stops"][previousStopIndex +1]["arrivalTime"];
-                        next = Utils.toSeconds(next.hh, next.mm, next.ss);
-
-                        // Compute previous stop time in seconds
-                        var previous = vehicleData["stops"][previousStopIndex]["departureTime"];
-                        previous = Utils.toSeconds(previous.hh, previous.mm, previous.ss);
-
-                        // Compute time passed from the previous stop
-                        var delta = (currentTime - previous) / (next - previous);
-                        var lat = d3.interpolateNumber(
-                            parseFloat(vehicleData["stops"][previousStopIndex]["lat"]),
-                            parseFloat(vehicleData["stops"][previousStopIndex +1]["lat"])
-                        )(delta);
-                        var lon = d3.interpolateNumber(
-                            parseFloat(vehicleData["stops"][previousStopIndex]["lon"]),
-                            parseFloat(vehicleData["stops"][previousStopIndex +1]["lon"])
-                        )(delta);
-
-                        var projection = __model.getMapModel().project(lat, lon);
-
-                        var tColor = new THREE.Color();
-                        tColor.setStyle("#fff");
-
-                        if(_vehiclesLabels[tripId] == undefined) {
-                            _vehiclesLabels[tripId] = getLabelMesh(vehicleData["routeId"], tColor);
-                            _vehiclesLabelGroup.add(_vehiclesLabels[tripId]);
-                        }
-                        positionTextMesh(_vehiclesLabels[tripId], projection.x, projection.y);
-                    } else if(_vehiclesLabels[tripId] != undefined) {
-                        _vehiclesLabelGroup.remove(_vehiclesLabels[tripId]);
-                        _vehiclesLabels[tripId] = undefined;
-                    }
-                }
             }
+            computeScene(__model.getAnimationModel().getTime());
         } else if(_needUpdate) {
             _allTrips = __model.getCTAModel().getTrips();
             _vehiclesLabels = {};
@@ -93,49 +48,43 @@ function VehiclesLabelSceneController() {
     };
 
     /*------------------ PRIVATE METHODS -----------------*/
-    var getLabelMesh = function(text, color) {
-        var textGeometry = new THREE.TextGeometry(text, {
-            font: 'helvetiker',
-            //weight: "regular",
-            style: "normal",
-            size: 6
-        });
+    var computeScene = function(time) {
+        var labelColor = new THREE.Color();
+        labelColor.setStyle("#fff");
 
-        var material = new THREE.MeshBasicMaterial({color: color});
-        var mesh = new THREE.Mesh(textGeometry, material);
+        for(var tripId in _trips) {
+            var trip = _trips[tripId];
 
-        mesh.rotation.x = Math.PI;
+            var lastRelevantStopIndex = Utils.cta.getLastStopIndex(time, trip["stops"]);
+            var relevant = trip["hop"] == 0 || lastRelevantStopIndex >= trip["closestStopIndex"];
 
-        return mesh;
-    };
+            if(lastRelevantStopIndex != -1 && relevant) {
+                var next = Utils.cta.toSeconds(trip["stops"][lastRelevantStopIndex +1]["arrivalTime"]);
+                var previous = Utils.cta.toSeconds(trip["stops"][lastRelevantStopIndex]["departureTime"]);
 
-    var positionTextMesh = function(mesh, x, y) {
-        var textGeometry = mesh.geometry;
-        textGeometry.computeBoundingBox();
-        var deltaX = -0.5 * ( textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x );
-        var deltaY = 0.5 * ( textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y );
-        mesh.position.x = x + deltaX -1.5;
-        mesh.position.y = y + deltaY;
-    };
+                // Compute time passed from the previous stop
+                var delta = (time - previous) / (next - previous);
+                var lat = d3.interpolateNumber(
+                    parseFloat(trip["stops"][lastRelevantStopIndex]["lat"]),
+                    parseFloat(trip["stops"][lastRelevantStopIndex +1]["lat"])
+                )(delta);
+                var lon = d3.interpolateNumber(
+                    parseFloat(trip["stops"][lastRelevantStopIndex]["lon"]),
+                    parseFloat(trip["stops"][lastRelevantStopIndex +1]["lon"])
+                )(delta);
 
-    var getLastStopIndex = function(time, stops) {
-        var s = 0;
-        var stopTimeInSeconds;
+                var projection = __model.getMapModel().project(lat, lon);
 
-        while(s < stops.length) {
-            stopTimeInSeconds =
-                Utils.toSeconds(
-                    stops[s]["arrivalTime"]["hh"],
-                    stops[s]["arrivalTime"]["mm"],
-                    stops[s]["arrivalTime"]["ss"]
-                );
-            if(time < stopTimeInSeconds) {
-                return s -1;
+                if(_vehiclesLabels[tripId] == undefined) {
+                    _vehiclesLabels[tripId] = Utils.gl.getLabelMesh(trip["routeId"], labelColor);
+                    _vehiclesLabelGroup.add(_vehiclesLabels[tripId]);
+                }
+                Utils.gl.positionTextMesh(_vehiclesLabels[tripId], projection.x, projection.y);
+            } else if(_vehiclesLabels[tripId] != undefined) {
+                _vehiclesLabelGroup.remove(_vehiclesLabels[tripId]);
+                delete _vehiclesLabels[tripId];
             }
-            s++;
         }
-
-        return -1;
     };
 
     var updateAnimation = function() {
@@ -148,7 +97,7 @@ function VehiclesLabelSceneController() {
 
         _trips = {};
         for (var tripId in _allTrips) {
-            if (parseInt(_allTrips[tripId]["hop"]) == 0) {
+            if (parseInt(_allTrips[tripId]["type"]) == 3) {
                 _trips[tripId] = _allTrips[tripId];
             }
         }

@@ -15,6 +15,8 @@ function CTAModel() {
     var _updateTimer;
     var _updateIntervalMillis = 60000; // Update every minute
 
+    var _maximumTransferTime = 15 * 60; // 15 minutes
+
     /*------------------ PUBLIC METHODS ------------------*/
     /**
      *
@@ -38,6 +40,15 @@ function CTAModel() {
     this.getTrips = function() {
         return _trips;
     };
+
+    /**
+     *
+     * @returns {*}
+     */
+    this.getMaximumTransferTime = function() {
+        return _maximumTransferTime;
+    };
+
     /*
     this.getTrips = function(time, handler) {
         if(_trips == null) {
@@ -59,13 +70,16 @@ function CTAModel() {
     };*/
 
     this.updateData = function() {
-        var request = "http://127.0.0.1:3000/api/stops/41.869621/-87.648757/500/";
+        var requestLocation = __model.getLocationModel().getLocation();
         var time = Utils.now();
+        var request = "http://127.0.0.1:3000/api/stops/" + requestLocation.lat + "/" + requestLocation.lon + "/500/";//41.869621/-87.648757/500/";
 
+        /*
         request +=
             (time.getHours() < 10 ? "0" : "") + time.getHours() + ":" +
             (time.getMinutes() < 10 ? "0" : "") + time.getMinutes() + ":" +
-            (time.getSeconds() < 10 ? "0" : "") + time.getSeconds();
+            (time.getSeconds() < 10 ? "0" : "") + time.getSeconds();*/
+        request += "13:15:00";
 
         request += "/15";
 

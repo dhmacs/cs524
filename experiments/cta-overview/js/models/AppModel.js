@@ -12,6 +12,8 @@ function AppModel() {
     var _mapModel;
     var _ctaModel;
     var _animationModel;
+    var _locationModel;
+    var _themeModel;
 
     /*------------------ PUBLIC METHODS ------------------*/
 
@@ -39,11 +41,29 @@ function AppModel() {
         return _animationModel;
     };
 
+    /**
+     *
+     * @returns {*}
+     */
+    this.getLocationModel = function() {
+        return _locationModel;
+    };
+
+    /**
+     *
+     * @returns {*}
+     */
+    this.getThemeModel = function() {
+        return _themeModel;
+    };
+
 
     /*------------------ PRIVATE METHODS -----------------*/
     var init = function () {
         _mapModel = new MapModel();
         _ctaModel = new CTAModel();
         _animationModel = new AnimationModel();
+        _locationModel = new LocationModel();
+        _themeModel = new ThemeModel();
     }();
 }

@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title></title>
 
+    <!-- FONTS -->
+    <link href='//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
     <!-- STYLES -->
     <link rel="stylesheet" href="styles/generics.css"/>
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.5.2/mapbox-gl.css' rel='stylesheet' />
@@ -35,6 +38,8 @@
     <script src="js/models/MapModel.js"></script>
     <script src="js/models/CTAModel.js"></script>
     <script src="js/models/AnimationModel.js"></script>
+    <script src="js/models/LocationModel.js"></script>
+    <script src="js/models/ThemeModel.js"></script>
 
     <!-- Controllers -->
     <script src="js/controllers/UIViewController.js"></script>
@@ -44,6 +49,8 @@
     <script src="js/controllers/map/UIMapCanvasViewController.js"></script>
     <script src="js/controllers/map/UIBusCanvasViewController.js"></script>
     <script src="js/controllers/map/UITransitViewController.js"></script>
+    <script src="js/controllers/map/UISideInfoBarViewController.js"></script>
+    <script src="js/controllers/map/UIAnimationTimeViewController.js"></script>
 
     <script src="js/controllers/map/DirectorViewController.js"></script>
     <script src="js/controllers/map/scenes/SceneController.js"></script>
@@ -51,9 +58,12 @@
     <script src="js/controllers/map/scenes/TrailsSceneController.js"></script>
     <script src="js/controllers/map/scenes/BusNumbersSceneController.js"></script>
     <script src="js/controllers/map/scenes/ConnectionsSceneController.js"></script>
-    <script src="js/controllers/map/scenes/VehiclesPositionSceneController.js"></script>
     <script src="js/controllers/map/scenes/VehiclesLabelSceneController.js"></script>
     <script src="js/controllers/map/scenes/StopsSceneController.js"></script>
+    <script src="js/controllers/map/scenes/PathSceneController.js"></script>
+    <script src="js/controllers/map/scenes/VehiclesSceneController.js"></script>
+    <script src="js/controllers/map/scenes/VehiclesStopsSceneController.js"></script>
+    <script src="js/controllers/map/scenes/TransfersSceneController.js"></script>
 
     <!-- Views -->
     <script src="js/view/UIView.js"></script>
@@ -109,6 +119,35 @@
 				//gl_FragColor = vec4(1.0,0.0,0.0,1.0);
 				gl_FragColor = vec4(vColor, opacity) * texture2D( texture, gl_PointCoord );
 
+			}
+
+</script>
+
+
+<script type="x-shader/x-vertex" id="pathVertexShader">
+			attribute float opacity;
+
+			varying vec3 vColor;
+            varying float vOpacity;
+
+			void main() {
+				vColor = color;
+                vOpacity = opacity;
+
+                //gl_PointSize = 10;
+                vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+
+                gl_Position = projectionMatrix * mvPosition;
+			}
+
+		</script>
+
+<script type="x-shader/x-fragment" id="pathFragmentShader">
+			varying vec3 vColor;
+			varying float vOpacity;
+
+			void main() {
+                gl_FragColor = vec4(vColor, vOpacity);
 			}
 
 </script>

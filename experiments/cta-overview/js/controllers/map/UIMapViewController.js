@@ -34,11 +34,14 @@ function UIMapViewController() {
             var map = new mapboxgl.Map({
                 container: 'map',
                 style: style,
-                center: [41.876795, -87.710610],
+                center: [41.876795, -87.680610],
                 zoom: 11.5//10.5
             });
 
             self.getModel().getMapModel().setMap(map);
+
+            // Set location
+            __model.getLocationModel().setLocation(41.869654, -87.648537);
 
             //_canvas = new UIBusCanvasViewController();
             //_canvas = new UITransitViewController();
@@ -51,15 +54,31 @@ function UIMapViewController() {
             layer = new UserLocationSceneController();
             _director.addScene(layer, 0, "location");
 
-            layer = new TrailsSceneController();
-            _director.addScene(layer, 6, "trails");
+            layer = new PathSceneController();
+            _director.addScene(layer, 6, "paths");
 
+            layer = new VehiclesStopsSceneController();
+            _director.addScene(layer, 9, "stops");
 
-            layer = new BusNumbersSceneController();
-            _director.addScene(layer, 9, "numbers");
+            layer = new TransfersSceneController();
+            _director.addScene(layer, 12, "transfers");
 
-            layer = new StopsSceneController();
-            _director.addScene(layer, 7, "stops");
+            layer = new VehiclesSceneController();
+            _director.addScene(layer, 15, "vehicles");
+
+            layer = new VehiclesLabelSceneController();
+            _director.addScene(layer, 18, "vehiclesLabels");
+
+            /*
+
+             layer = new TrailsSceneController();
+             _director.addScene(layer, 6, "trails");
+
+             layer = new BusNumbersSceneController();
+             _director.addScene(layer, 9, "numbers");
+
+             layer = new StopsSceneController();
+             _director.addScene(layer, 7, "stops");
 
             layer = new ConnectionsSceneController();
             _director.addScene(layer, 3, "connections");
@@ -68,26 +87,63 @@ function UIMapViewController() {
             _director.addScene(layer, 12, "vehiclesPositions");
 
             layer = new VehiclesLabelSceneController();
-            _director.addScene(layer, 15, "vehiclesLabels");
+            _director.addScene(layer, 15, "vehiclesLabels");*/
 
             // Start cta model updates
             __model.getCTAModel().startUpdates();
 
-            var animationStep = 3;
+            var forwardStep = 3;
+            var backwardStep = 5;
 
             self.add(_director);
             _director.getView().getCamera().position.z = 5;
             __model.getAnimationModel()
-                .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0), animationStep);
+                .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0));
 
             _director.play(function() {
-                __model.getAnimationModel().step();
-                if(__model.getAnimationModel().getState() == AnimationState.END) {
-                    __model.getAnimationModel()
-                        .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0), animationStep);
+                switch (__model.getAnimationModel().getState()) {
+                    case AnimationState.START:
+                        __model.getAnimationModel()
+                            .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0));
+                        __model.getAnimationModel().step(forwardStep);
+                        break;
+                    case AnimationState.RUNNING:
+                        __model.getAnimationModel().step(forwardStep);
+                        break;
+                    case AnimationState.RUNNING_BACK:
+                        __model.getAnimationModel().stepBack(backwardStep);
+                        break;
+                    case AnimationState.END:
+                        __model.getAnimationModel().stepBack(backwardStep);
+                        break;
                 }
                 return false;
-            })
+            });
+
+
+            // Add side bar
+            /*
+            var sideController = new UISideInfoBarViewController();
+            var map = __model.getMapModel().getMap();
+            var size = {
+                width: 300,
+                height: map.canvas.canvas.height
+            };
+            sideController.getView().getD3Layer().style("position", "absolute");
+            sideController.getView().getD3Layer().style("top", "0px");
+            sideController.getView().getD3Layer().style("right", "0px");
+            sideController.getView().getD3Layer().style("height", size.height + "px");
+            sideController.getView().getD3Layer().style("width", size.width + "px");
+            sideController.getView().setViewBox(0, 0, size.width, size.height);
+            self.add(sideController);*/
+
+
+            // Add animation time view controller
+            var animationTimeVC = new UIAnimationTimeViewController();
+            animationTimeVC.getView().getD3Layer().style("position", "absolute");
+            animationTimeVC.getView().getD3Layer().style("bottom", "0px");
+            animationTimeVC.getView().getD3Layer().style("left", "0px");
+            self.add(animationTimeVC);
         });
 
 

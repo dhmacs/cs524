@@ -44,7 +44,6 @@ function UIMapCanvasViewController() {
     };
 
     this.onMapMove = function() {
-        console.log("UIMapCanvasViewController.move");
     };
 
     /**

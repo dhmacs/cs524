@@ -164,7 +164,7 @@ function UISVGView() {
      * @param color
      */
     this.setBackgroundColor = function (color) {
-        self.getD3Layer().select(".background").data([color])
+        self.getD3Layer().selectAll(".background").data([color])
             .attr("fill", function(d) {
                 return d;
             })

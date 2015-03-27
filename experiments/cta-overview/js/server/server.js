@@ -226,7 +226,7 @@ app.get('/api/stops/:lat/:lon/:radius/:time/:minutes', function(req,res){
     };
 
 
-    result = findFeasibleRides(departureOptions, transferOptions, selectionOptions, 1);
+    result = findFeasibleRides(departureOptions, transferOptions, selectionOptions, 2);
     /*
      console.time("acc");
 
@@ -438,8 +438,11 @@ var findClosestStopIndex = function (tripId, location) {
 var findFeasibleRides = function(departureOptions, transfersOptions, selectionOptions, maxNumberOfTransfers) {
     var graph = app.locals.ctaGraph;
     var trips = app.locals.trips;
+    var routes = app.locals.routes;
 
     var result = {};
+
+    var routesSelected = {};
 
     if(maxNumberOfTransfers == 0)
         return {};
@@ -447,10 +450,30 @@ var findFeasibleRides = function(departureOptions, transfersOptions, selectionOp
     /**/
     var nearbyTripsIds = findTripsIds(departureOptions.area, departureOptions.timeRange);
     nearbyTripsIds.forEach(function(tripId) {
-        // TODO: Check route duplicates
-        result[tripId] = _.extend({}, trips[tripId]);   // The purpose of this instruction is to clone trips[tripId]
-        result[tripId].closestStopIndex = findClosestStopIndex(tripId, departureOptions.area.center);
-        result[tripId].hop = 0;
+        var routeId = trips[tripId].routeId;
+        var directionId = trips[tripId].directionId;
+        if(routesSelected[routeId] == undefined) {
+            routesSelected[routeId] = {};
+        }
+        if(routesSelected[routeId][directionId] == undefined) {
+            routesSelected[routeId][directionId] = 1;
+        } else if(routesSelected[routeId][directionId] <= selectionOptions.maxNumberOfSameRouteAndDirectionTrips) {
+            result[tripId] = _.extend({}, trips[tripId]);   // The purpose of this instruction is to clone trips[tripId]
+            result[tripId].closestStopIndex = findClosestStopIndex(tripId, departureOptions.area.center);
+            result[tripId].hop = 0;
+            result[tripId].type = routes[result[tripId].routeId].type;
+            if(result[tripId].type == 1) {
+                result[tripId].color = routes[result[tripId].routeId].color;
+            }
+
+            result[tripId].stops.forEach(function(stop, i) {
+                var stopData = graph.getNodeData(stop.stopId);
+                result[tripId].stops[i].lat = stopData.stopLatitude;
+                result[tripId].stops[i].lon = stopData.stopLongitude;
+            });
+
+            routesSelected[routeId][directionId]++;
+        }
     });
 
     if(maxNumberOfTransfers == 1) {
@@ -458,7 +481,7 @@ var findFeasibleRides = function(departureOptions, transfersOptions, selectionOp
     }
 
     // Find trips within departure area
-    nearbyTripsIds.forEach(function(tripId) {
+    for(var tripId in result) {
         //var closestStopIndex = findClosestStopIndex(tripId, location);
         for(var i = result[tripId].closestStopIndex; i < trips[tripId].stops.length; i++) {
             var stop = graph.getNodeData(result[tripId].stops[i].stopId);
@@ -477,39 +500,38 @@ var findFeasibleRides = function(departureOptions, transfersOptions, selectionOp
             };
             var transfers = findFeasibleRides(depOptions, transfersOptions, selectionOptions, maxNumberOfTransfers -1);
             result[tripId].stops[i].transfers = [];
-            transfers.forEach(function(transferId) {
+            for(var transferId in transfers) {
                 // TODO: Check route duplicates
-                transfers[transferId].hop++;
-                result[tripId].stops[i].transfers.push({
-                    tripId: transferId,
-                    stopIndex: transfers[transferId].closestStopIndex
-                });
-
-                // Add transfer to result
-                if(result[transferId] == undefined) {
-                    result[transferId] = _.extend({}, transfers[transferId]);
-                } else {
-                    result[transferId].closestStopIndex =
-                        result[transferId].closestStopIndex < transfers[transferId].closestStopIndex ?
-                            result[transferId].closestStopIndex : transfers[transferId].closestStopIndex;
+                var routeId = trips[transferId].routeId;
+                var directionId = trips[transferId].directionId;
+                if(routesSelected[routeId] == undefined) {
+                    routesSelected[routeId] = {};
                 }
-            });
+                if(routesSelected[routeId][directionId] == undefined) {
+                    routesSelected[routeId][directionId] = 1;
+                } else if(routesSelected[routeId][directionId] <= selectionOptions.maxNumberOfSameRouteAndDirectionTrips) {
+                    transfers[transferId].hop++;
+                    result[tripId].stops[i].transfers.push({
+                        tripId: transferId,
+                        stopIndex: transfers[transferId].closestStopIndex
+                    });
+
+                    // Add transfer to result
+                    if(result[transferId] == undefined) {
+                        result[transferId] = _.extend({}, transfers[transferId]);
+                    } else {
+                        result[transferId].closestStopIndex =
+                            result[transferId].closestStopIndex < transfers[transferId].closestStopIndex ?
+                                result[transferId].closestStopIndex : transfers[transferId].closestStopIndex;
+                    }
+                    routesSelected[routeId][directionId]++;
+                }
+            }
         }
-    });
+    }
 
     return result;
 };
-
-// TODO
-/*
- * @point {lat, lon}
- * @area {lat, lon, radius}
- */
-var isPointInArea = function(point, area) {
-
-};
-
-
 
 
 
@@ -691,8 +713,8 @@ var loadStops = function() {
             graph.addNode(row["stop_id"], {
                 stopName: row["stop_name"],
                 stopDescription: row["stop_desc"],
-                stopLatitude: row["stop_lat"],
-                stopLongitude: row["stop_lon"]
+                stopLatitude: parseFloat(row["stop_lat"]),
+                stopLongitude: parseFloat(row["stop_lon"])
             });
         })
         .on("end", function(){

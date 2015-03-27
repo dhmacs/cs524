@@ -5,7 +5,6 @@
  * @author Massimo De Marchi
  * @created 3/9/15.
  */
-console.log("UserLocationSceneController");
 function UserLocationSceneController() {
     SceneController.call(this);
 
@@ -22,8 +21,8 @@ function UserLocationSceneController() {
     };
 
     var _circleSizes = {
-        max: 120,
-        min: 10
+        max: 60 * window.devicePixelRatio,
+        min: 5 * window.devicePixelRatio
     };
 
     var _locationAnimationIncrement = 0.002;
@@ -37,6 +36,14 @@ function UserLocationSceneController() {
         // Update location animation
         var locationSize = _geometryBuffer.attributes.size.array;
         var locationOpacity = _geometryBuffer.attributes.vertexOpacity.array;
+        var locationPosition = _geometryBuffer.attributes.position.array;
+
+        var location = __model.getLocationModel().getLocation();
+        var projection = __model.getMapModel().project(location.lat, location.lon);
+
+        locationPosition[0] = projection.x;
+        locationPosition[1] = projection.y;
+        locationPosition[2] = 1;
 
         for(var i = 1; i < _circlesNumber; i++) {
             if(locationOpacity[i] > _circlesOpacities.min) {
@@ -48,6 +55,10 @@ function UserLocationSceneController() {
             locationSize[i] =
                 (1 - ((locationOpacity[i] - _circlesOpacities.min) /
                 (_circlesOpacities.max - _circlesOpacities.min))) * (_circleSizes.max - _circleSizes.min) + _circleSizes.min;
+
+            locationPosition[i * 3] = projection.x;
+            locationPosition[i * 3 +1] = projection.y;
+            locationPosition[i * 3 +2] = 1;
         }
 
         _geometryBuffer.attributes.position.needsUpdate = true;
@@ -98,7 +109,8 @@ function UserLocationSceneController() {
         var locationParticles = new THREE.PointCloud( _geometryBuffer, shaderMaterial );
         self.getScene().add(locationParticles);
 
-        var location = __model.getMapModel().project(41.869654, -87.648537);
+        var loc = __model.getLocationModel().getLocation();
+        var location = __model.getMapModel().project(loc.lat, loc.lon);
         var locationPosition = _geometryBuffer.attributes.position.array;
         var locationColor = _geometryBuffer.attributes.customColor.array;
         var locationSize = _geometryBuffer.attributes.size.array;

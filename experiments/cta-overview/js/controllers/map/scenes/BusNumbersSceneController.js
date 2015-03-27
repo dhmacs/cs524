@@ -40,8 +40,7 @@ function BusNumbersSceneController() {
                     var previousStopIndex = getLastStopIndex(currentTime, vehicleData["stops"]);
 
                     // Compute relevance of the vehicle position (if not relevant then do not display it or use low opacity)
-                    var relevant = vehicleData["stops"][previousStopIndex +1]["relevant"];
-                    relevant = relevant == undefined ? true : relevant;
+                    var relevant = vehicleData["hop"] == 0 || (previousStopIndex +1) >= vehicleData["closestStopIndex"];
 
                     if(previousStopIndex > -1 && relevant) {
                         // Compute next stop time in seconds
@@ -68,11 +67,13 @@ function BusNumbersSceneController() {
                         var tColor = new THREE.Color();
                         tColor.setStyle("#fff");
 
-                        if(_vehiclesLabels[tripId] == undefined) {
-                            _vehiclesLabels[tripId] = getLabelMesh(vehicleData["routeId"], tColor);
-                            _vehiclesLabelGroup.add(_vehiclesLabels[tripId]);
+                        if(vehicleData["type"] != 1) {
+                            if(_vehiclesLabels[tripId] == undefined) {
+                                _vehiclesLabels[tripId] = getLabelMesh(vehicleData["routeId"], tColor);
+                                _vehiclesLabelGroup.add(_vehiclesLabels[tripId]);
+                            }
+                            positionTextMesh(_vehiclesLabels[tripId], projection.x, projection.y);
                         }
-                        positionTextMesh(_vehiclesLabels[tripId], projection.x, projection.y);
                     } else if(_vehiclesLabels[tripId] != undefined) {
                         _vehiclesLabelGroup.remove(_vehiclesLabels[tripId]);
                         _vehiclesLabels[tripId] = undefined;
@@ -115,26 +116,6 @@ function BusNumbersSceneController() {
         var deltaY = 0.5 * ( textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y );
         mesh.position.x = x + deltaX -1.5;
         mesh.position.y = y + deltaY;
-    };
-
-    var getLastStopIndex = function(time, stops) {
-        var s = 0;
-        var stopTimeInSeconds;
-
-        while(s < stops.length) {
-            stopTimeInSeconds =
-                Utils.toSeconds(
-                    stops[s]["arrivalTime"]["hh"],
-                    stops[s]["arrivalTime"]["mm"],
-                    stops[s]["arrivalTime"]["ss"]
-                );
-            if(time < stopTimeInSeconds) {
-                return s -1;
-            }
-            s++;
-        }
-
-        return -1;
     };
 
 

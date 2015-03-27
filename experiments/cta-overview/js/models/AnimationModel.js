@@ -11,16 +11,14 @@ function AnimationModel() {
 
     var _start;
     var _duration;
-    var _step;
     var _current;
-
+    var _lastStep;
     var _state;
 
     /*------------------ PUBLIC METHODS ------------------*/
-    this.setTimeDrivenAnimation = function(start, duration, step) {
+    this.setTimeDrivenAnimation = function(start, duration) {
         _start = start;
         _duration = duration;
-        _step = step;
         _current = start;
 
         _state = AnimationState.START;
@@ -31,12 +29,26 @@ function AnimationModel() {
     };
 
     this.getDeltaTime = function() {
-        return _step;
+        return _lastStep;
     };
 
-    this.step = function() {
-        _current += _step;
+    this.step = function(step) {
+        _lastStep = step;
+        _current += step;
         _state = _current > _start + _duration ? AnimationState.END : AnimationState.RUNNING;
+        __notificationCenter.dispatch(Notifications.Animation.ANIMATION_STEP);
+    };
+
+    /*
+    this.getStepInterval = function() {
+        return _forwardStep;
+    };*/
+
+    this.stepBack = function(step) {
+        _lastStep = step;
+        _current -= step;
+        _state = _current < _start ? AnimationState.START : AnimationState.RUNNING_BACK;
+        __notificationCenter.dispatch(Notifications.Animation.ANIMATION_STEP);
     };
 
     this.getState = function() {
@@ -52,5 +64,6 @@ function AnimationModel() {
 var AnimationState = {
     START: "start",
     END: "end",
-    RUNNING: "running"
+    RUNNING: "running",
+    RUNNING_BACK: "running back"
 };

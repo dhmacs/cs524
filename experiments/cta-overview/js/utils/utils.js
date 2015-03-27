@@ -41,17 +41,56 @@ Utils.nowToSeconds = function() {
 
 Utils.now = function() {
     var now = new Date();
-    //now.setHours(13);
-    //now.setMinutes(15);
+    now.setHours(13);
+    now.setMinutes(15);
     return now;
 };
 
+
+
+
+/****************** GL ********************/
 Utils.gl.circleTexture = function() {
     var texture = THREE.ImageUtils.loadTexture( "img/circle.png" );
     texture.minFilter = THREE.LinearFilter;
     return texture;
 };
 
+Utils.gl.transferTexture = function() {
+    var texture = THREE.ImageUtils.loadTexture( "img/swap.png" );
+    texture.minFilter = THREE.LinearFilter;
+    return texture;
+};
+
+Utils.gl.getLabelMesh = function(text, color) {
+    var textGeometry = new THREE.TextGeometry(text, {
+        font: 'helvetiker',
+        //weight: "regular",
+        style: "normal",
+        size: 6
+    });
+
+    var material = new THREE.MeshBasicMaterial({color: color});
+    var mesh = new THREE.Mesh(textGeometry, material);
+
+    mesh.rotation.x = Math.PI;
+
+    return mesh;
+};
+
+Utils.gl.positionTextMesh = function(mesh, x, y) {
+    var textGeometry = mesh.geometry;
+    textGeometry.computeBoundingBox();
+    var deltaX = -0.5 * ( textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x );
+    var deltaY = 0.5 * ( textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y );
+    mesh.position.x = x + deltaX -1.5;
+    mesh.position.y = y + deltaY;
+};
+
+
+
+
+/****************** CTA ********************/
 Utils.cta.getLastStopIndex = function(time, stops) {
     var s = 0;
     var stopTimeInSeconds;
@@ -70,4 +109,8 @@ Utils.cta.getLastStopIndex = function(time, stops) {
     }
 
     return -1;
+};
+
+Utils.cta.toSeconds = function(ctaTime) {
+    return Utils.toSeconds(ctaTime.hh, ctaTime.mm, ctaTime.ss);
 };

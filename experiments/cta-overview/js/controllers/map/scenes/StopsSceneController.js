@@ -16,8 +16,9 @@ function StopsSceneController() {
     var _geometryBuffer;
     var _mesh = null;
 
-    var _stopSize = 10;
-    var _stopOpacityMax = 0.4;
+    var _subwayStopSize = 7.5 * window.devicePixelRatio;
+    var _stopSize = 5 * window.devicePixelRatio;
+    var _stopOpacityMax = 0.7;
     var _deltaOpacity = 0.002;
 
     /*------------------ PUBLIC METHODS ------------------*/
@@ -56,8 +57,7 @@ function StopsSceneController() {
                     var previousStopIndex = Utils.cta.getLastStopIndex(currentTime, vehicleData["stops"]);
 
                     // Compute relevance of the vehicle position (if not relevant then do not display it or use low opacity)
-                    var relevant = vehicleData["stops"][previousStopIndex +1]["relevant"];
-                    relevant = relevant == undefined ? true : relevant;
+                    var relevant = vehicleData["hop"] == 0 || (previousStopIndex +1) >= vehicleData["closestStopIndex"];
 
                     if(previousStopIndex > -1 && relevant) {
                         // Compute previous stop time in seconds
@@ -71,8 +71,10 @@ function StopsSceneController() {
                             var projection = __model.getMapModel().project(lat, lon);
 
                             var tColor = new THREE.Color();
-                            tColor.setStyle("#3182bd");
-                            if(parseInt(vehicleData["hop"]) == 0) {
+
+                            if(vehicleData["color"] != undefined) {
+                                tColor.setStyle("#" + vehicleData["color"]);
+                            } else if(vehicleData["hop"] == 0) {
                                 tColor.setStyle("#3182bd");
                             } else {
                                 tColor.setStyle("#95a5a6");
@@ -83,7 +85,12 @@ function StopsSceneController() {
                                 i++;
                             }
 
-                            size[i] = _stopSize;
+                            if(vehicleData["type"] == 1) {
+                                size[i] = _subwayStopSize;
+                            } else {
+                                size[i] = _stopSize;
+                            }
+
                             position[i * 3] = projection.x;
                             position[i * 3 +1] = projection.y;
                             position[i * 3 +2] = 1;
