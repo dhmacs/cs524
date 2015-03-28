@@ -28,6 +28,10 @@ function AnimationModel() {
         return _current;
     };
 
+    this.getStartTime = function() {
+        return _start;
+    };
+
     this.getDeltaTime = function() {
         return _lastStep;
     };
@@ -57,7 +61,7 @@ function AnimationModel() {
 
     /*------------------ PRIVATE METHODS -----------------*/
     var init = function () {
-
+        _state = AnimationState.START;
     }();
 }
 

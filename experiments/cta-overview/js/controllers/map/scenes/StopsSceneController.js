@@ -17,7 +17,7 @@ function StopsSceneController() {
     var _mesh = null;
 
     var _subwayStopSize = 7.5 * window.devicePixelRatio;
-    var _stopSize = 5 * window.devicePixelRatio;
+    var _stopSize = 7.5 * window.devicePixelRatio;
     var _stopOpacityMax = 0.7;
     var _deltaOpacity = 0.002;
 

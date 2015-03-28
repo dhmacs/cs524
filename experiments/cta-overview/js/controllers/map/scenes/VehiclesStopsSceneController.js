@@ -20,8 +20,8 @@ function VehiclesStopsSceneController() {
 
     // UI
     var _stopOpacity = {
-        min: 0.2,
-        max: 0.4
+        min: 0.1,
+        max: 0.6
     };
     var _busStopSize = 3 * window.devicePixelRatio;
     var _trainStopSize = 4 * window.devicePixelRatio;
@@ -80,7 +80,16 @@ function VehiclesStopsSceneController() {
         for(var tripId in _trips) {
             var trip = _trips[tripId];
 
+            trailStartTime = time - __model.getCTAModel().getMaximumTransferTime();
+            trailStartTime = trailStartTime < __model.getAnimationModel().getStartTime() ?
+                __model.getAnimationModel().getStartTime() : trailStartTime;
+
             var firstRelevantStopIndex = Utils.cta.getLastStopIndex(trailStartTime, trip["stops"]);
+            if(trip["hop"] > 0 && firstRelevantStopIndex < trip["closestStopIndex"]) {
+                firstRelevantStopIndex = trip["closestStopIndex"];
+                trailStartTime = Utils.cta.toSeconds(trip["stops"][firstRelevantStopIndex]["arrivalTime"]);
+            }
+
             var lastRelevantStopIndex = Utils.cta.getLastStopIndex(time, trip["stops"]);
 
             var relevant = trip["hop"] == 0 || (lastRelevantStopIndex +1) >= trip["closestStopIndex"];

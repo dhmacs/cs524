@@ -21,7 +21,7 @@ function VehiclesSceneController() {
     // UI
     var _vehicleOpacity = {
         nearby: 0.9,
-        transfer: 0.5
+        transfer: 0.7
     };
     var _busSize = 15 * window.devicePixelRatio;
     var _trainSize = 20 * window.devicePixelRatio;
@@ -39,13 +39,13 @@ function VehiclesSceneController() {
                 updateAnimation();
                 _needUpdate = false;
             } else {
-
+                computeScene(__model.getAnimationModel().getTime());
+                _geometryBuffer.attributes.position.needsUpdate = true;
+                _geometryBuffer.attributes.customColor.needsUpdate = true;
+                _geometryBuffer.attributes.size.needsUpdate = true;
+                _geometryBuffer.attributes.vertexOpacity.needsUpdate = true;
             }
-            computeScene(__model.getAnimationModel().getTime());
-            _geometryBuffer.attributes.position.needsUpdate = true;
-            _geometryBuffer.attributes.customColor.needsUpdate = true;
-            _geometryBuffer.attributes.size.needsUpdate = true;
-            _geometryBuffer.attributes.vertexOpacity.needsUpdate = true;
+
         } else if(_needUpdate) {
             _trips = __model.getCTAModel().getTrips();
             updateAnimation();
@@ -123,8 +123,14 @@ function VehiclesSceneController() {
                     opacities[vehicleIndex] = _vehicleOpacity.nearby;
                 } else {
                     var grayShade = new THREE.Color();
-                    grayShade.setStyle(__model.getThemeModel().shadowColor());
-                    vehicleColor.lerp(grayShade, 0.5);
+                    if(parseInt(trip["type"]) == 3) {
+                        grayShade.setStyle(__model.getThemeModel().shadowColor());
+                    } else {
+                        grayShade.setStyle(__model.getThemeModel().trainShadowColor());
+                    }
+
+                    vehicleColor.lerp(grayShade, 0.3);
+
                     opacities[vehicleIndex] = _vehicleOpacity.transfer;
                 }
 

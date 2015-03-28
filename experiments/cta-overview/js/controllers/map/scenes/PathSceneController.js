@@ -75,18 +75,32 @@ function PathSceneController() {
             opacities[i] = 0;
         }
 
+        trailStartTime = trailStartTime < __model.getAnimationModel().getStartTime() ?
+            __model.getAnimationModel().getStartTime() : trailStartTime;
+
 
         for(var tripId in _trips) {
             var trip = _trips[tripId];
+
+            trailStartTime = time - __model.getCTAModel().getMaximumTransferTime();
+            trailStartTime = trailStartTime < __model.getAnimationModel().getStartTime() ?
+                __model.getAnimationModel().getStartTime() : trailStartTime;
+
             var firstRelevantStopIndex = Utils.cta.getLastStopIndex(trailStartTime, trip["stops"]);
+            if(trip["hop"] > 0 && firstRelevantStopIndex < trip["closestStopIndex"]) {
+                firstRelevantStopIndex = trip["closestStopIndex"];
+                trailStartTime = Utils.cta.toSeconds(trip["stops"][firstRelevantStopIndex]["arrivalTime"]);
+            }
+
+
             var lastRelevantStopIndex = Utils.cta.getLastStopIndex(time, trip["stops"]);
 
             var trailTail = {};
             var trailHead = {};
 
-            //var relevant = trip["hop"] == 0 || (previousStopIndex +1) >= vehicleData["closestStopIndex"];
+            var relevant = trip["hop"] == 0 || time >= Utils.cta.toSeconds(trip["stops"][trip["closestStopIndex"]]["arrivalTime"]);
 
-            if(lastRelevantStopIndex != -1) {
+            if(lastRelevantStopIndex != -1 && relevant) {
                 var next = Utils.cta.toSeconds(trip["stops"][lastRelevantStopIndex +1]["arrivalTime"]);
                 var previous = Utils.cta.toSeconds(trip["stops"][lastRelevantStopIndex]["departureTime"]);
 
@@ -134,10 +148,13 @@ function PathSceneController() {
                 positions[_cutPoints[tripId][2] * 3 +1] = projection.y;
                 positions[_cutPoints[tripId][2] * 3 +2] = 1;
 
-                var relevant = trip["hop"] == 0 || lastRelevantStopIndex >= trip["closestStopIndex"];
+                // TODO
+                /*
+                relevant = trip["hop"] == 0 || lastRelevantStopIndex >= trip["closestStopIndex"];
                 if(relevant) {
-                    opacities[_cutPoints[tripId][2]] = _opacity.max;
-                }
+                    opacities[_cutPoints[tripId][2]] = opacityScale(time);//_opacity.max;
+                }*/
+                opacities[_cutPoints[tripId][2]] = opacityScale(time);
 
                 positions[_cutPoints[tripId][3] * 3] = projection.x;
                 positions[_cutPoints[tripId][3] * 3 +1] = projection.y;
@@ -160,10 +177,13 @@ function PathSceneController() {
                 positions[_cutPoints[tripId][1] * 3 +1] = projection.y;
                 positions[_cutPoints[tripId][1] * 3 +2] = 1;
 
+                // TODO
+                /*
                 relevant = trip["hop"] == 0 || firstRelevantStopIndex >= trip["closestStopIndex"];
                 if(relevant) {
-                    opacities[_cutPoints[tripId][1]] = _opacity.min;
-                }
+                    opacities[_cutPoints[tripId][1]] = opacityScale(Utils.cta.toSeconds(trip["stops"][i]["arrivalTime"]));//_opacity.min;
+                }*/
+                opacities[_cutPoints[tripId][1]] = opacityScale(Utils.cta.toSeconds(trip["stops"][i]["arrivalTime"]));
 
                 i++; // Start from the stop after the first relevant one
                 for(; i <= lastRelevantStopIndex; i++) {
@@ -272,9 +292,14 @@ function PathSceneController() {
             }
 
             if(trip["hop"] > 0) {
-                var shadowColor = new THREE.Color();
-                shadowColor.setStyle(__model.getThemeModel().shadowColor());
-                trailsColor.lerp(shadowColor, 0.5);
+                var grayShade = new THREE.Color();
+                if(parseInt(trip["type"]) == 3) {
+                    grayShade.setStyle(__model.getThemeModel().shadowColor());
+                } else {
+                    grayShade.setStyle(__model.getThemeModel().trainShadowColor());
+                }
+
+                trailsColor.lerp(grayShade, 0.5);
             }
             /*
             else {

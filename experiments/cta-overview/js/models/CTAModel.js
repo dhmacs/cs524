@@ -74,14 +74,14 @@ function CTAModel() {
         var time = Utils.now();
         var request = "http://127.0.0.1:3000/api/stops/" + requestLocation.lat + "/" + requestLocation.lon + "/500/";//41.869621/-87.648757/500/";
 
-        /*
+
         request +=
             (time.getHours() < 10 ? "0" : "") + time.getHours() + ":" +
             (time.getMinutes() < 10 ? "0" : "") + time.getMinutes() + ":" +
-            (time.getSeconds() < 10 ? "0" : "") + time.getSeconds();*/
-        request += "13:15:00";
+            (time.getSeconds() < 10 ? "0" : "") + time.getSeconds();
+        //request += "13:15:00";
 
-        request += "/15";
+        request += "/15"; // 15 minutes
 
         console.log("REQUEST: " + request);
         console.time("RequestTime");

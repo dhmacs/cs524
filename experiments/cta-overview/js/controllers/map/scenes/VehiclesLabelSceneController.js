@@ -76,6 +76,11 @@ function VehiclesLabelSceneController() {
                 var projection = __model.getMapModel().project(lat, lon);
 
                 if(_vehiclesLabels[tripId] == undefined) {
+                    if(trip["hop"] == 0) {
+                        labelColor.setStyle(__model.getThemeModel().nearbyBusTextColor());
+                    } else {
+                        labelColor.setStyle(__model.getThemeModel().transferBusTextColor());
+                    }
                     _vehiclesLabels[tripId] = Utils.gl.getLabelMesh(trip["routeId"], labelColor);
                     _vehiclesLabelGroup.add(_vehiclesLabels[tripId]);
                 }

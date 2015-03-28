@@ -23,7 +23,11 @@ function ThemeModel() {
      * @returns {string}
      */
     this.shadowColor = function() {
-        return "#bdbdbd";
+        return "#fff";//"#737373";//"#d9d9d9";
+    };
+
+    this.trainShadowColor = function() {
+        return "#fff";
     };
 
     /**
@@ -32,6 +36,14 @@ function ThemeModel() {
      */
     this.transferSymbolColor = function() {
         return "rgb(51,46,33)";
+    };
+
+    this.nearbyBusTextColor = function() {
+        return "#fff";
+    };
+
+    this.transferBusTextColor = function() {
+        return "#fff";
     };
 
     /*------------------ PRIVATE METHODS -----------------*/

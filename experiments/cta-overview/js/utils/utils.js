@@ -7,6 +7,7 @@
 var Utils = Utils || {};
 Utils.gl = {};
 Utils.cta = {};
+Utils.scale = {};
 
 Utils.extend = function (subClass, superClass) {
     // Avoid instantiating the superClass class just to setup inheritance
@@ -41,8 +42,8 @@ Utils.nowToSeconds = function() {
 
 Utils.now = function() {
     var now = new Date();
-    now.setHours(13);
-    now.setMinutes(15);
+    //now.setHours(13);
+    //now.setMinutes(15);
     return now;
 };
 
@@ -114,3 +115,65 @@ Utils.cta.getLastStopIndex = function(time, stops) {
 Utils.cta.toSeconds = function(ctaTime) {
     return Utils.toSeconds(ctaTime.hh, ctaTime.mm, ctaTime.ss);
 };
+
+
+Utils.scale.exponential = function() {
+    return function(fun) {
+        var domain = [0, 1];
+        var range = [0, 1];
+        var expDomain = [0, 100];
+        var expRange = [0, 1];
+        var exponent = 2;
+
+        function scale(x) {
+            var xPerc = (x - domain[0]) / (domain[1] - domain[0]);
+            var x0 = xPerc * (expDomain[1] -  expDomain[0]) + expDomain[0];
+
+            if(x0 == 0)
+                return range[0];
+            var y = Math.pow(Math.E, -1/(Math.pow(x0, exponent)));
+
+            return y * (range[1] - range[0]) + range[0];
+        }
+
+        scale.domain = function(x) {
+            if(!arguments.length)
+                return domain;
+            domain = x;
+            return scale;
+        };
+
+        scale.range = function(x) {
+            if(!arguments.length)
+                return range;
+            range = x;
+            return scale;
+        };
+
+        scale.exponent = function(x) {
+            if(!arguments.length)
+                return exponent;
+            exponent = x;
+            return scale;
+        };
+
+        return scale;
+    } ();
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

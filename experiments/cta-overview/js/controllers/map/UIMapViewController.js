@@ -41,7 +41,8 @@ function UIMapViewController() {
             self.getModel().getMapModel().setMap(map);
 
             // Set location
-            __model.getLocationModel().setLocation(41.869654, -87.648537);
+            //__model.getLocationModel().setLocation(41.869654, -87.648537);
+            __model.getLocationModel().setLocation(41.894591, -87.624161);
 
             //_canvas = new UIBusCanvasViewController();
             //_canvas = new UITransitViewController();
@@ -92,29 +93,50 @@ function UIMapViewController() {
             // Start cta model updates
             __model.getCTAModel().startUpdates();
 
-            var forwardStep = 3;
-            var backwardStep = 5;
+            var forwardSpeedFunction = Utils.scale.exponential();//d3.scale.pow();
+            forwardSpeedFunction.exponent(2);
+            forwardSpeedFunction.range([0.1, 4]);
+
+            var backwardSpeedFunction = Utils.scale.exponential();//d3.scale.pow();
+            backwardSpeedFunction.exponent(2);
+            backwardSpeedFunction.range([2, 5.5]);
 
             self.add(_director);
             _director.getView().getCamera().position.z = 5;
-            __model.getAnimationModel()
-                .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0));
+
 
             _director.play(function() {
                 switch (__model.getAnimationModel().getState()) {
                     case AnimationState.START:
-                        __model.getAnimationModel()
-                            .setTimeDrivenAnimation(Utils.nowToSeconds(), Utils.toSeconds(1, 0, 0));
-                        __model.getAnimationModel().step(forwardStep);
+                        var currentTime = Utils.nowToSeconds();
+                        var duration = Utils.toSeconds(1, 0, 0);
+
+                        __model.getAnimationModel().setTimeDrivenAnimation(currentTime, duration);
+
+                        forwardSpeedFunction.domain([currentTime, currentTime + duration]);
+                        backwardSpeedFunction.domain([currentTime, currentTime + duration]);
+
+                        __model.getAnimationModel().step(forwardSpeedFunction(__model.getAnimationModel().getTime()));
                         break;
                     case AnimationState.RUNNING:
-                        __model.getAnimationModel().step(forwardStep);
+                        __model.getAnimationModel().step(forwardSpeedFunction(__model.getAnimationModel().getTime()));
                         break;
                     case AnimationState.RUNNING_BACK:
-                        __model.getAnimationModel().stepBack(backwardStep);
+                        currentTime = Utils.nowToSeconds();
+                        if(__model.getAnimationModel().getTime() <= currentTime) {
+                            duration = Utils.toSeconds(1, 0, 0);
+                            __model.getAnimationModel().setTimeDrivenAnimation(currentTime, duration);
+
+                            forwardSpeedFunction.domain([currentTime, currentTime + duration]);
+                            backwardSpeedFunction.domain([currentTime, currentTime + duration]);
+
+                            __model.getAnimationModel().step(forwardSpeedFunction(__model.getAnimationModel().getTime()));
+                        } else {
+                            __model.getAnimationModel().stepBack(backwardSpeedFunction(__model.getAnimationModel().getTime()));
+                        }
                         break;
                     case AnimationState.END:
-                        __model.getAnimationModel().stepBack(backwardStep);
+                        __model.getAnimationModel().stepBack(backwardSpeedFunction(__model.getAnimationModel().getTime()));
                         break;
                 }
                 return false;
