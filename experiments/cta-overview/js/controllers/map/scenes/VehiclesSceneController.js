@@ -20,8 +20,8 @@ function VehiclesSceneController() {
 
     // UI
     var _vehicleOpacity = {
-        nearby: 0.9,
-        transfer: 0.7
+        nearby: 0.95,
+        transfer: 0.65
     };
     var _busSize = 15 * window.devicePixelRatio;
     var _trainSize = 20 * window.devicePixelRatio;

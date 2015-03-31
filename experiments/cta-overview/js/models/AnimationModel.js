@@ -32,6 +32,22 @@ function AnimationModel() {
         return _start;
     };
 
+    this.getEndTime = function() {
+        return _start + _duration;
+    };
+
+    this.getElapsedTime = function() {
+        return _current - _start;
+    };
+
+    this.getLeftTime = function() {
+        return _start + _duration - _current;
+    };
+
+    this.getDuration = function() {
+        return _duration;
+    };
+
     this.getDeltaTime = function() {
         return _lastStep;
     };

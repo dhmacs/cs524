@@ -42,8 +42,8 @@ Utils.nowToSeconds = function() {
 
 Utils.now = function() {
     var now = new Date();
-    //now.setHours(13);
-    //now.setMinutes(15);
+    now.setHours(12);
+    now.setMinutes(0);
     return now;
 };
 
@@ -58,7 +58,7 @@ Utils.gl.circleTexture = function() {
 };
 
 Utils.gl.transferTexture = function() {
-    var texture = THREE.ImageUtils.loadTexture( "img/swap.png" );
+    var texture = THREE.ImageUtils.loadTexture( "img/connection.png" );
     texture.minFilter = THREE.LinearFilter;
     return texture;
 };
@@ -116,6 +116,14 @@ Utils.cta.toSeconds = function(ctaTime) {
     return Utils.toSeconds(ctaTime.hh, ctaTime.mm, ctaTime.ss);
 };
 
+Utils.cta.secondsToHhMmSs = function(seconds) {
+    return {
+        hh : Math.floor(seconds / 3600),
+        mm : Math.floor((seconds%3600) / 60),
+        ss : Math.floor((seconds%3600) % 60)
+    };
+};
+
 
 Utils.scale.exponential = function() {
     return function(fun) {
@@ -124,6 +132,7 @@ Utils.scale.exponential = function() {
         var expDomain = [0, 100];
         var expRange = [0, 1];
         var exponent = 2;
+        var smoothness = 2;
 
         function scale(x) {
             var xPerc = (x - domain[0]) / (domain[1] - domain[0]);
@@ -131,7 +140,7 @@ Utils.scale.exponential = function() {
 
             if(x0 == 0)
                 return range[0];
-            var y = Math.pow(Math.E, -1/(Math.pow(x0, exponent)));
+            var y = Math.pow(Math.E, -smoothness/(Math.pow(x0, exponent)));
 
             return y * (range[1] - range[0]) + range[0];
         }
@@ -154,6 +163,50 @@ Utils.scale.exponential = function() {
             if(!arguments.length)
                 return exponent;
             exponent = x;
+            return scale;
+        };
+
+        scale.smoothness = function(x) {
+            if(!arguments.length)
+                return smoothness;
+            smoothness = x;
+            return scale;
+        };
+
+        return scale;
+    } ();
+};
+
+Utils.scale.sin = function() {
+    return function() {
+        var domain = [0, 1];
+        var range = [0, 1];
+        var expDomain = [0, 1];
+
+        function scale(x) {
+            var xPerc = (x - domain[0]) / (domain[1] - domain[0]);
+            var x0 = xPerc * (expDomain[1] -  expDomain[0]) + expDomain[0];
+
+            if(xPerc >= 1) {
+                return range[1];
+            }
+
+            var y = (Math.sin(Math.pow(x0, 0.5) * Math.PI - Math.PI /2) +1)/2;
+
+            return y * (range[1] - range[0]) + range[0];
+        }
+
+        scale.domain = function(x) {
+            if(!arguments.length)
+                return domain;
+            domain = x;
+            return scale;
+        };
+
+        scale.range = function(x) {
+            if(!arguments.length)
+                return range;
+            range = x;
             return scale;
         };
 

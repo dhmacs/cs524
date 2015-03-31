@@ -14,6 +14,7 @@ function AppModel() {
     var _animationModel;
     var _locationModel;
     var _themeModel;
+    var _wayFindingModel;
 
     /*------------------ PUBLIC METHODS ------------------*/
 
@@ -57,6 +58,14 @@ function AppModel() {
         return _themeModel;
     };
 
+    /**
+     *
+     * @returns {*}
+     */
+    this.getWayFindingModel = function() {
+        return _wayFindingModel;
+    };
+
 
     /*------------------ PRIVATE METHODS -----------------*/
     var init = function () {
@@ -65,5 +74,6 @@ function AppModel() {
         _animationModel = new AnimationModel();
         _locationModel = new LocationModel();
         _themeModel = new ThemeModel();
+        _wayFindingModel = new WayFindingModel();
     }();
 }

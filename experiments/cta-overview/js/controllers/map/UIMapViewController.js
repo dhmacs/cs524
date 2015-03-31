@@ -31,18 +31,33 @@ function UIMapViewController() {
         mapboxgl.util.getJSON('https://www.mapbox.com/mapbox-gl-styles/styles/outdoors-v6.json', function (err, style) {
             if (err) throw err;
 
+            // Set location
+            //__model.getLocationModel().setLocation(41.869654, -87.648537);
+            //__model.getLocationModel().setLocation(41.894591, -87.624161);
+
+
+            // Set wayfinding parameters
+            __model.getWayFindingModel().setOriginLocation(41.869904, -87.647522);//41.869904, -87.647522);//41.894591, -87.624161);//41.869749, -87.649224);
+            __model.getWayFindingModel().setNearbyMaximumRadius(400);
+            __model.getWayFindingModel().setMaximumWaitingTime(Utils.toSeconds(0, 15, 0));
+            __model.getWayFindingModel().setLookAheadTime(Utils.toSeconds(1, 0, 0));
+            __model.getWayFindingModel().setWalkingSpeed(1.38); // Average human walking speed
+            __model.getWayFindingModel().setMaximumTransferWalkingTime(Utils.toSeconds(0, 10, 0));
+
+            var zoom = {
+                min: 12.0,
+                max: 13
+            };
             var map = new mapboxgl.Map({
                 container: 'map',
                 style: style,
-                center: [41.876795, -87.680610],
-                zoom: 11.5//10.5
+                center: [__model.getWayFindingModel().getOriginLocation().lat, __model.getWayFindingModel().getOriginLocation().lon],
+                zoom: zoom.max//11.5//10.5
             });
 
             self.getModel().getMapModel().setMap(map);
 
-            // Set location
-            //__model.getLocationModel().setLocation(41.869654, -87.648537);
-            __model.getLocationModel().setLocation(41.894591, -87.624161);
+
 
             //_canvas = new UIBusCanvasViewController();
             //_canvas = new UITransitViewController();
@@ -93,52 +108,153 @@ function UIMapViewController() {
             // Start cta model updates
             __model.getCTAModel().startUpdates();
 
-            var forwardSpeedFunction = Utils.scale.exponential();//d3.scale.pow();
-            forwardSpeedFunction.exponent(2);
-            forwardSpeedFunction.range([0.1, 4]);
+            var forwardSpeedFunction = Utils.scale.exponential();//.sin();//d3.scale.pow();
+            forwardSpeedFunction.exponent(4);
+            forwardSpeedFunction.smoothness(1/5);
+            forwardSpeedFunction.range([0.1, 3]);
 
-            var backwardSpeedFunction = Utils.scale.exponential();//d3.scale.pow();
-            backwardSpeedFunction.exponent(2);
-            backwardSpeedFunction.range([2, 5.5]);
+            var backwardSpeedFunction = d3.scale.linear();//Utils.scale.exponential();//.sin();//d3.scale.pow();
+            //backwardSpeedFunction.smoothness(1/5);
+            //backwardSpeedFunction.exponent(4);
+            backwardSpeedFunction.range([2, 5]);
+
+
+            var zoomFunction = Utils.scale.sin();
+            //zoomFunction.exponent(6);
+            //zoomFunction.smoothness(100);
+            zoomFunction.range([12.6, 11.7]);
+
+            var mapCenterFunction = Utils.scale.sin();
+            mapCenterFunction.range([0, 1]);
+
+            var easingRatio = 1;
 
             self.add(_director);
             _director.getView().getCamera().position.z = 5;
 
+            var animatingView = false;
 
             _director.play(function() {
-                switch (__model.getAnimationModel().getState()) {
-                    case AnimationState.START:
-                        var currentTime = Utils.nowToSeconds();
-                        var duration = Utils.toSeconds(1, 0, 0);
+                var animationTime;// = __model.getAnimationModel().getTime();
+                var now = __model.getWayFindingModel().getDepartureTime();
+                var duration, bounds;
 
-                        __model.getAnimationModel().setTimeDrivenAnimation(currentTime, duration);
+                var handle = {
+                    first: Utils.toSeconds(0, 10, 0),
+                    second: Utils.toSeconds(0, 30, 0)
+                };
 
-                        forwardSpeedFunction.domain([currentTime, currentTime + duration]);
-                        backwardSpeedFunction.domain([currentTime, currentTime + duration]);
+                var location = __model.getWayFindingModel().getOriginLocation();
 
-                        __model.getAnimationModel().step(forwardSpeedFunction(__model.getAnimationModel().getTime()));
-                        break;
-                    case AnimationState.RUNNING:
-                        __model.getAnimationModel().step(forwardSpeedFunction(__model.getAnimationModel().getTime()));
-                        break;
-                    case AnimationState.RUNNING_BACK:
-                        currentTime = Utils.nowToSeconds();
-                        if(__model.getAnimationModel().getTime() <= currentTime) {
-                            duration = Utils.toSeconds(1, 0, 0);
-                            __model.getAnimationModel().setTimeDrivenAnimation(currentTime, duration);
+                if(__model.getCTAModel().getTrips() != null) {
+                    switch (__model.getAnimationModel().getState()) {
+                        case AnimationState.START:
+                            animatingView = false;
+                            duration = __model.getWayFindingModel().getLookAheadTime();
+                            __model.getAnimationModel().setTimeDrivenAnimation(now, duration);
 
-                            forwardSpeedFunction.domain([currentTime, currentTime + duration]);
-                            backwardSpeedFunction.domain([currentTime, currentTime + duration]);
+                            // Set domains
+                            forwardSpeedFunction.domain([now, now + (duration * easingRatio)]);
+                            backwardSpeedFunction.domain([now, now + (duration * easingRatio)]);
+                            zoomFunction.domain([now, now + duration * easingRatio]);
+                            mapCenterFunction.domain([now, now + (duration) * easingRatio]);
 
                             __model.getAnimationModel().step(forwardSpeedFunction(__model.getAnimationModel().getTime()));
-                        } else {
-                            __model.getAnimationModel().stepBack(backwardSpeedFunction(__model.getAnimationModel().getTime()));
-                        }
-                        break;
-                    case AnimationState.END:
-                        __model.getAnimationModel().stepBack(backwardSpeedFunction(__model.getAnimationModel().getTime()));
-                        break;
+                            break;
+                        case AnimationState.RUNNING:
+                            animationTime = __model.getAnimationModel().getTime();
+
+                            if(__model.getAnimationModel().getElapsedTime() > handle.first && !animatingView) {
+                                /*bounds = __model.getCTAModel().getBoundaries(__model.getAnimationModel().getEndTime());
+                                __model.getMapModel().getMap().fitBounds(
+                                    [[bounds.minLat, bounds.minLon],[bounds.maxLat, bounds.maxLon]], {
+                                        speed: 0.1
+                                    });*/
+                                var centroid = __model.getCTAModel().getCentroid();
+                                __model.getMapModel().getMap()
+                                    .easeTo(new mapboxgl.LatLng(centroid.lat, centroid.lon), zoom.min, undefined, {
+                                        duration: 10000
+                                    });
+                                animatingView = true;
+                            }
+
+                            /*
+                            // Change zoom
+                            __model.getMapModel().getMap().setZoom(zoomFunction(animationTime));
+                            // Change position
+                            var positionRatio = mapCenterFunction(animationTime);
+                            positionRatio = positionRatio > 1 ? 1 : positionRatio;
+                            positionRatio = positionRatio < 0 ? 0 : positionRatio;
+                            __model.getMapModel().getMap().setCenter([
+                                d3.interpolateNumber(location.lat, PTSCentroid.lat)(positionRatio),
+                                d3.interpolateNumber(location.lon, PTSCentroid.lon)(positionRatio)
+                            ]);*/
+
+                            // Step forward
+                            __model.getAnimationModel().step(forwardSpeedFunction(animationTime));
+                            break;
+                        case AnimationState.RUNNING_BACK:
+                            if(__model.getAnimationModel().getTime() <= now) {
+                                animatingView = false;
+                                duration = __model.getWayFindingModel().getLookAheadTime();
+                                __model.getAnimationModel().setTimeDrivenAnimation(now, duration);
+
+                                // Set domains
+                                forwardSpeedFunction.domain([now, now + (duration * easingRatio)]);
+                                backwardSpeedFunction.domain([now, now + (duration * easingRatio)]);
+                                zoomFunction.domain([now, now + duration * easingRatio]);
+                                mapCenterFunction.domain([now, now + (duration) * easingRatio]);
+
+                                animationTime = __model.getAnimationModel().getTime();
+
+                                /*
+                                // Zoom
+                                __model.getMapModel().getMap().setZoom(zoomFunction(animationTime));
+                                var positionRatio = mapCenterFunction(animationTime);
+                                positionRatio = positionRatio > 1 ? 1 : positionRatio;
+                                positionRatio = positionRatio < 0 ? 0 : positionRatio;
+                                __model.getMapModel().getMap().setCenter([
+                                    d3.interpolateNumber(location.lat, PTSCentroid.lat)(positionRatio),
+                                    d3.interpolateNumber(location.lon, PTSCentroid.lon)(positionRatio)
+                                ]);*/
+
+                                // Step forward
+                                __model.getAnimationModel().step(forwardSpeedFunction(animationTime));
+                            } else {
+                                animationTime = __model.getAnimationModel().getTime();
+
+                                if(__model.getAnimationModel().getElapsedTime() < handle.second && !animatingView) {
+                                    /*
+                                    bounds = __model.getCTAModel()
+                                        .getBoundaries(__model.getAnimationModel().getStartTime() + 60);*/
+                                    /*__model.getMapModel().getMap().fitBounds(
+                                        [[bounds.minLat, bounds.minLon],[bounds.maxLat, bounds.maxLon]], {
+                                            speed: 0.1
+                                        });*/
+                                    __model.getMapModel().getMap()
+                                        .easeTo(new mapboxgl.LatLng(location.lat, location.lon), zoom.max, undefined, {
+                                            duration: 12000
+                                        });
+                                    animatingView = true;
+                                }
+                                /*
+                                __model.getMapModel().getMap().setZoom(zoomFunction(animationTime));
+                                __model.getMapModel().getMap().setCenter([
+                                    d3.interpolateNumber(location.lat, PTSCentroid.lat)(mapCenterFunction(animationTime)),
+                                    d3.interpolateNumber(location.lon, PTSCentroid.lon)(mapCenterFunction(animationTime))
+                                ]);*/
+                                __model.getAnimationModel().stepBack(backwardSpeedFunction(animationTime));
+                            }
+
+                            break;
+                        case AnimationState.END:
+                            animatingView = false;
+                            animationTime = __model.getAnimationModel().getTime();
+                            __model.getAnimationModel().stepBack(backwardSpeedFunction(animationTime));
+                            break;
+                    }
                 }
+
                 return false;
             });
 

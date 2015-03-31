@@ -38,7 +38,7 @@ function UserLocationSceneController() {
         var locationOpacity = _geometryBuffer.attributes.vertexOpacity.array;
         var locationPosition = _geometryBuffer.attributes.position.array;
 
-        var location = __model.getLocationModel().getLocation();
+        var location = __model.getWayFindingModel().getOriginLocation();
         var projection = __model.getMapModel().project(location.lat, location.lon);
 
         locationPosition[0] = projection.x;
@@ -109,7 +109,7 @@ function UserLocationSceneController() {
         var locationParticles = new THREE.PointCloud( _geometryBuffer, shaderMaterial );
         self.getScene().add(locationParticles);
 
-        var loc = __model.getLocationModel().getLocation();
+        var loc = __model.getWayFindingModel().getOriginLocation();
         var location = __model.getMapModel().project(loc.lat, loc.lon);
         var locationPosition = _geometryBuffer.attributes.position.array;
         var locationColor = _geometryBuffer.attributes.customColor.array;

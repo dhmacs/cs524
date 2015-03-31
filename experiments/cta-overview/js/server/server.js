@@ -167,12 +167,12 @@ app.get('/api/stops/:lat/:lon/:radius', function(req,res){
     res.send(result);
 });
 
-app.get('/api/stops/:lat/:lon/:radius/:time/:minutes', function(req,res){
+app.get('/api/stops/:lat/:lon/:radius/:time/:seconds/:walkingspeed', function(req,res){
     var result;
 
     console.log("\nNEW REQUEST\n");
     var time = req.params.time;
-    var minutesRange = req.params.minutes;
+    var timeInterval = ds.secondsToTime(req.params.seconds);
 
     var r = /([0-9][0-9]):([0-9][0-9]):([0-9][0-9])/;
     var results = time.match(r);
@@ -182,6 +182,8 @@ app.get('/api/stops/:lat/:lon/:radius/:time/:minutes', function(req,res){
         ss: parseInt(results[3])
     };
 
+    var walkingSpeed = parseFloat(req.params.walkingspeed);
+
     var lat = req.params.lat;
     var lon = req.params.lon;
     var radius = req.params.radius;
@@ -189,7 +191,8 @@ app.get('/api/stops/:lat/:lon/:radius/:time/:minutes', function(req,res){
     var departureOptions = {
         area: {
             center: {lat: lat, lon: lon},
-            radius: radius
+            radius: radius,
+            walkingSpeed: walkingSpeed
         },
         timeRange: {
             start: {
@@ -198,14 +201,14 @@ app.get('/api/stops/:lat/:lon/:radius/:time/:minutes', function(req,res){
                 ss: departureTime.ss
             },
             duration: {
-                hh: 0,
-                mm: minutesRange,
-                ss: 0
+                hh: timeInterval.hh,
+                mm: timeInterval.mm,
+                ss: timeInterval.ss
             }
         }
     };
     var transferOptions = {
-        radius: 100,
+        radius: 200,
         maxTransferTime: {
             hh: 0,
             mm: 10,
@@ -267,7 +270,11 @@ var findTripsIds = function(area, timeRange) {
                     var minTime = ds.timeToSeconds(timeRange.start.hh, timeRange.start.mm, timeRange.start.ss);
                     var maxTime = minTime + ds.timeToSeconds(timeRange.duration.hh, timeRange.duration.mm, timeRange.duration.ss);
 
-                    return departure > minTime && departure <= maxTime;
+                    var stop = graph.getNodeData(currentStopId);
+                    var distanceFromOrigin = distance({lat: stop.stopLatitude, lon: stop.stopLongitude}, area.center);
+                    var walkTime = distanceFromOrigin / area.walkingSpeed;
+
+                    return departure > (minTime + walkTime) && departure <= maxTime;
                 }).map(function(edge) {
                     return edge.tripId;
                 });
@@ -398,7 +405,8 @@ var findFeasibleRides = function(departureOptions, transfersOptions, selectionOp
                         lat: stop.stopLatitude,
                         lon: stop.stopLongitude
                     },
-                    radius: transfersOptions.radius
+                    radius: transfersOptions.radius,
+                    walkingSpeed: departureOptions.area.walkingSpeed
                 },
                 timeRange: {
                     start: result[tripId].stops[i].arrivalTime,
@@ -425,8 +433,14 @@ var findFeasibleRides = function(departureOptions, transfersOptions, selectionOp
 
                     // Add transfer to result
                     if(result[transferId] == undefined) {
+                        /*if(transferId == "46081413704") {
+                            console.log("A");
+                        }*/
                         result[transferId] = _.extend({}, transfers[transferId]);
                     } else {
+                        /*if(transferId == "46081413704") {
+                            console.log("B");
+                        }*/
                         result[transferId].closestStopIndex =
                             result[transferId].closestStopIndex < transfers[transferId].closestStopIndex ?
                                 result[transferId].closestStopIndex : transfers[transferId].closestStopIndex;

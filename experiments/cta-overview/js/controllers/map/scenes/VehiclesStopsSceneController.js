@@ -20,11 +20,11 @@ function VehiclesStopsSceneController() {
 
     // UI
     var _stopOpacity = {
-        min: 0.1,
-        max: 0.6
+        min: 0.4,
+        max: 0.8
     };
-    var _busStopSize = 3 * window.devicePixelRatio;
-    var _trainStopSize = 4 * window.devicePixelRatio;
+    var _busStopSize = 4 * window.devicePixelRatio;
+    var _trainStopSize = 6 * window.devicePixelRatio;
 
 
     /*------------------ PUBLIC METHODS ------------------*/
@@ -95,13 +95,31 @@ function VehiclesStopsSceneController() {
             var relevant = trip["hop"] == 0 || (lastRelevantStopIndex +1) >= trip["closestStopIndex"];
 
             if(lastRelevantStopIndex != -1 && relevant) {
+
+                if(trip["color"] != undefined) {
+                    stopColor.setStyle("#" + trip["color"]);
+                } else {
+                    stopColor.setStyle(__model.getThemeModel().busColor());
+                }
+
+                if(trip["hop"] > 0) {
+                    var grayShade = new THREE.Color();
+                    if(parseInt(trip["type"]) == 3) {
+                        grayShade.setStyle(__model.getThemeModel().shadowColor());
+                    } else {
+                        grayShade.setStyle(__model.getThemeModel().trainShadowColor());
+                    }
+
+                    stopColor.lerp(grayShade, 0.5);
+                }
+                /*
                 if(trip["color"] != undefined) {
                     stopColor.setStyle("#" + trip["color"]);
                 } else if(trip["hop"] == 0) {
                     stopColor.setStyle("#3182bd");
                 } else {
                     stopColor.setStyle("#95a5a6");
-                }
+                }*/
 
                 var vehicleSize = parseInt(trip["type"]) == 3 ? _busStopSize : _trainStopSize;
 

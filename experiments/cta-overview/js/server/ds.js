@@ -54,6 +54,14 @@
         return parseInt(hours) * 3600 +  parseInt(minutes) * 60 + parseInt(seconds);
     };
 
+    ds.secondsToTime = function(seconds) {
+        return {
+            hh : Math.floor(seconds / 3600),
+            mm : Math.floor((seconds%3600) / 60),
+            ss : Math.floor((seconds%3600) % 60)
+        };
+    };
+
     // Export the Underscore object for **Node.js**, with
     // backwards-compatibility for the old `require()` API. If we're in
     // the browser, add `_` as a global object.

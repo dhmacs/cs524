@@ -76,7 +76,6 @@ function TransfersSceneController() {
             for(var transferId in _transfers[tripId]) {
                 _transfers[tripId][transferId].forEach(function(transfer) {
                     var getOffTime = Utils.cta.toSeconds(_trips[tripId]["stops"][transfer.getOffStopIndex]["arrivalTime"]);
-                    console.log(transferId);
                     var getOnTime = Utils.cta.toSeconds(_trips[transferId]["stops"][transfer.getOnStopIndex]["arrivalTime"]);
 
                     if(time >= getOffTime && time <= getOnTime) {

@@ -49,39 +49,77 @@ function CTAModel() {
         return _maximumTransferTime;
     };
 
-    /*
-    this.getTrips = function(time, handler) {
-        if(_trips == null) {
-            var request = "http://127.0.0.1:3000/api/stops/6627/";
+    /**
+     * Returns the Public Transport System centroid
+     */
+    this.getCentroid = function() {
+        return {
+            lat: 41.875021,
+            lon: -87.685250
+        };
+    };
 
-            request +=
-             (time.getHours() < 10 ? "0" : "") + time.getHours() + ":" +
-             (time.getMinutes() < 10 ? "0" : "") + time.getMinutes() + ":" +
-             (time.getSeconds() < 10 ? "0" : "") + time.getSeconds();
+    /**
+     * Return trips geographical boundaries at a certain time
+     * @param time
+     * @returns {*}
+     */
+    this.getBoundaries = function(time) {
+        console.log(time);
+        var boundaries = null;
 
-            console.log("REQUEST: " + request);
-            d3.json(request, function(json) {
-                _trips = json;
-                handler(json);
-            });
-        } else {
-            handler(_trips);
+        if(_trips != null) {
+            for(var tripId in _trips) {
+                var trip = _trips[tripId];
+                var lastStopIndex = Utils.cta.getLastStopIndex(time, trip["stops"]);
+                if(lastStopIndex != -1) {
+                    var previous = {
+                        lat: trip["stops"][lastStopIndex +1]["lat"],
+                        lon: trip["stops"][lastStopIndex +1]["lon"]
+                    };
+                    var next = {
+                        lat: trip["stops"][lastStopIndex +1]["lat"],
+                        lon: trip["stops"][lastStopIndex +1]["lon"]
+                    };
+                    var stopBoundaries = {
+                        minLat: previous.lat < next.lat ? previous.lat : next.lat,
+                        minLon: previous.lon < next.lon ? previous.lon : next.lon,
+                        maxLat: previous.lat > next.lat ? previous.lat : next.lat,
+                        maxLon: previous.lon > next.lon ? previous.lon : next.lon
+                    };
+                    if(boundaries == null) {
+                        boundaries = stopBoundaries;
+                    } else {
+                        boundaries = {
+                            minLat: stopBoundaries.minLat < boundaries.minLat ? stopBoundaries.minLat : boundaries.minLat,
+                            minLon: stopBoundaries.minLon < boundaries.minLon ? stopBoundaries.minLon : boundaries.minLon,
+                            maxLat: stopBoundaries.maxLat > boundaries.maxLat ? stopBoundaries.maxLat : boundaries.maxLat,
+                            maxLon: stopBoundaries.maxLon > boundaries.maxLon ? stopBoundaries.maxLon : boundaries.maxLon
+                        };
+                    }
+                }
+            }
         }
-    };*/
+
+        return boundaries;
+    };
 
     this.updateData = function() {
-        var requestLocation = __model.getLocationModel().getLocation();
-        var time = Utils.now();
-        var request = "http://127.0.0.1:3000/api/stops/" + requestLocation.lat + "/" + requestLocation.lon + "/500/";//41.869621/-87.648757/500/";
+        var requestLocation = __model.getWayFindingModel().getOriginLocation();
+        var time = Utils.cta.secondsToHhMmSs(__model.getWayFindingModel().getDepartureTime());
+        var request = "http://127.0.0.1:3000/api/stops/" + requestLocation.lat + "/" + requestLocation.lon;//41.869621/-87.648757/500/";
 
+        // Nearby radius
+        request += "/" + __model.getWayFindingModel().getNearbyMaximumRadius() + "/";
 
         request +=
-            (time.getHours() < 10 ? "0" : "") + time.getHours() + ":" +
-            (time.getMinutes() < 10 ? "0" : "") + time.getMinutes() + ":" +
-            (time.getSeconds() < 10 ? "0" : "") + time.getSeconds();
+            (time.hh < 10 ? "0" : "") + time.hh + ":" +
+            (time.mm < 10 ? "0" : "") + time.mm + ":" +
+            (time.ss < 10 ? "0" : "") + time.ss;
         //request += "13:15:00";
 
-        request += "/15"; // 15 minutes
+        request += "/" + __model.getWayFindingModel().getMaximumWaitingTime();
+        request += "/" + __model.getWayFindingModel().getWalkingSpeed();
 
         console.log("REQUEST: " + request);
         console.time("RequestTime");
