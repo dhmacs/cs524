@@ -23,7 +23,7 @@ function VehiclesSceneController() {
         nearby: 0.95,
         transfer: 0.65
     };
-    var _busSize = 15 * window.devicePixelRatio;
+    var _busSize = 18 * window.devicePixelRatio;
     var _trainSize = 20 * window.devicePixelRatio;
 
     /*------------------ PUBLIC METHODS ------------------*/

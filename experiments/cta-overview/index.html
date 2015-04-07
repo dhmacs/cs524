@@ -50,12 +50,11 @@
     <script src="js/controllers/map/UIMapCanvasViewController.js"></script>
     <script src="js/controllers/map/UIBusCanvasViewController.js"></script>
     <script src="js/controllers/map/UITransitViewController.js"></script>
-    <script src="js/controllers/map/UISideInfoBarViewController.js"></script>
-    <script src="js/controllers/map/UIAnimationTimeViewController.js"></script>
+    <script src="js/controllers/overlay-views/UIAnimationTimeViewController.js"></script>
+    <script src="js/controllers/overlay-views/UITimesTableViewController.js"></script>
 
     <script src="js/controllers/map/DirectorViewController.js"></script>
     <script src="js/controllers/map/scenes/SceneController.js"></script>
-    <script src="js/controllers/map/scenes/UserLocationSceneController.js"></script>
     <script src="js/controllers/map/scenes/TrailsSceneController.js"></script>
     <script src="js/controllers/map/scenes/BusNumbersSceneController.js"></script>
     <script src="js/controllers/map/scenes/ConnectionsSceneController.js"></script>
@@ -65,6 +64,8 @@
     <script src="js/controllers/map/scenes/VehiclesSceneController.js"></script>
     <script src="js/controllers/map/scenes/VehiclesStopsSceneController.js"></script>
     <script src="js/controllers/map/scenes/TransfersSceneController.js"></script>
+    <script src="js/controllers/map/scenes/LocationSceneController.js"></script>
+    <script src="js/controllers/map/scenes/WalkingWaveSceneController.js"></script>
 
     <!-- Views -->
     <script src="js/view/UIView.js"></script>
@@ -118,7 +119,8 @@
                 }
 				//gl_FragColor = vec4( color * vColor, 1.0 );
 				//gl_FragColor = vec4(1.0,0.0,0.0,1.0);
-				gl_FragColor = vec4(vColor, opacity) * texture2D( texture, gl_PointCoord );
+				vec4 texColor = texture2D( texture, gl_PointCoord );
+				gl_FragColor = vec4(vColor, opacity * texColor.a);//(texColor.r * texColor.g * texColor.b));// * texColor;
 
 			}
 

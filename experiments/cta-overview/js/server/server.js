@@ -30,6 +30,7 @@ app.use(function(req, res, next) {
     next();
 });
 
+/*
 app.get('/', function(req,res){
     res.send("hi");
 });
@@ -165,13 +166,16 @@ app.get('/api/stops/:lat/:lon/:radius', function(req,res){
     });
 
     res.send(result);
-});
+});*/
 
-app.get('/api/stops/:lat/:lon/:radius/:time/:seconds/:walkingspeed', function(req,res){
+app.get('/api/stops/:lat/:lon/:radius/:dayofweek/:time/:seconds/:walkingspeed', function(req,res){
     var result;
 
     console.log("\nNEW REQUEST\n");
     var time = req.params.time;
+
+    var weekDays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+    var dayOfWeek = weekDays[parseInt(req.params["dayofweek"])];
     var timeInterval = ds.secondsToTime(req.params.seconds);
 
     var r = /([0-9][0-9]):([0-9][0-9]):([0-9][0-9])/;
@@ -204,7 +208,8 @@ app.get('/api/stops/:lat/:lon/:radius/:time/:seconds/:walkingspeed', function(re
                 hh: timeInterval.hh,
                 mm: timeInterval.mm,
                 ss: timeInterval.ss
-            }
+            },
+            dayOfWeek: dayOfWeek
         }
     };
     var transferOptions = {
@@ -221,6 +226,39 @@ app.get('/api/stops/:lat/:lon/:radius/:time/:seconds/:walkingspeed', function(re
 
 
     result = findFeasibleRides(departureOptions, transferOptions, selectionOptions, 2);
+
+    // Remove reduntant trips
+    var trips = app.locals.trips;
+    var routesSelected = {};
+
+    var tripToRemove = [];
+
+    for(var tripId in result) {
+        var routeId = trips[tripId].routeId;
+        var directionId = trips[tripId].directionId;
+
+        if(routesSelected[routeId] == undefined) {
+            routesSelected[routeId] = {};
+        }
+        if(routesSelected[routeId][directionId] == undefined) {
+            routesSelected[routeId][directionId] = [];
+        }
+
+        var sortedIndex = _.sortedIndex(routesSelected[routeId][directionId], tripId, function(id) {
+            var time = trips[id].stops[0].arrivalTime;
+            return ds.timeToSeconds(time.hh, time.mm, time.ss);
+        });
+
+        routesSelected[routeId][directionId].splice(sortedIndex, 0, tripId);
+
+        if(routesSelected[routeId][directionId].length > selectionOptions.maxNumberOfSameRouteAndDirectionTrips) {
+            tripToRemove.push(routesSelected[routeId][directionId].pop());
+        }
+    }
+
+    tripToRemove.forEach(function(id) {
+        delete result[id];
+    });
 
     res.send(result);
 });
@@ -247,6 +285,8 @@ var distance = function(locationA, locationB) {
  */
 var findTripsIds = function(area, timeRange) {
     var graph = app.locals.ctaGraph;
+    var calendar = app.locals.calendar;
+    var trips = app.locals.trips;
 
     var result = [];
 
@@ -274,7 +314,13 @@ var findTripsIds = function(area, timeRange) {
                     var distanceFromOrigin = distance({lat: stop.stopLatitude, lon: stop.stopLongitude}, area.center);
                     var walkTime = distanceFromOrigin / area.walkingSpeed;
 
-                    return departure > (minTime + walkTime) && departure <= maxTime;
+                    /*
+                    if(calendar[trips[edge.tripId]["serviceId"]][timeRange.dayOfWeek]) {
+                        console.log(edge.fromTime.hh + ":" + edge.fromTime.mm + ":" + edge.fromTime.ss
+                        + " / " + trips[edge.tripId]["routeId"]
+                        + " = " +calendar[trips[edge.tripId]["serviceId"]][timeRange.dayOfWeek]);
+                    }*/
+                    return calendar[trips[edge.tripId]["serviceId"]][timeRange.dayOfWeek] && departure > (minTime + walkTime) && departure <= maxTime;
                 }).map(function(edge) {
                     return edge.tripId;
                 });
@@ -297,22 +343,33 @@ var findTripsIds = function(area, timeRange) {
     return result;
 };
 
-var findClosestStopIndex = function (tripId, location) {
+var findClosestStopIndex = function (tripId, departureOptions) {
     var trips = app.locals.trips;
     var graph = app.locals.ctaGraph;
+
+    var location = departureOptions.area.center;
+
+    var interval = departureOptions.timeRange.start;
+    var time = ds.timeToSeconds(interval.hh, interval.mm, interval.ss);
 
     var prevStop, currentStop;
 
     // Reduce to min index
-    return trips[tripId].stops.reduce(function(previousValue, currentValue, index, array) {
-        prevStop = graph.getNodeData(array[previousValue].stopId);
+    var relevantStops = trips[tripId].stops
+        .filter(function(stop) {
+            var stopTime = ds.timeToSeconds(stop.departureTime.hh, stop.departureTime.mm, stop.departureTime.ss);
+            return stopTime > time;
+        });
+    var startIndex = relevantStops[0].stopSequence -1;
+    return relevantStops.reduce(function(previousValue, currentValue, index, array) {
+        prevStop = graph.getNodeData(trips[tripId].stops[previousValue].stopId);
         currentStop = graph.getNodeData(array[index].stopId);
 
         if(distance({lat:prevStop.stopLatitude, lon:prevStop.stopLongitude}, location) >
             distance({lat:currentStop.stopLatitude, lon:currentStop.stopLongitude}, location)) {
-            return index;
+            return array[index].stopSequence-1;//index;
         } else return previousValue;
-    }, 0);
+    }, startIndex);
 };
 
 /*
@@ -356,38 +413,26 @@ var findFeasibleRides = function(departureOptions, transfersOptions, selectionOp
 
     var result = {};
 
-    var routesSelected = {};
-
     if(maxNumberOfTransfers == 0)
         return {};
 
     /**/
     var nearbyTripsIds = findTripsIds(departureOptions.area, departureOptions.timeRange);
     nearbyTripsIds.forEach(function(tripId) {
-        var routeId = trips[tripId].routeId;
-        var directionId = trips[tripId].directionId;
-        if(routesSelected[routeId] == undefined) {
-            routesSelected[routeId] = {};
+        result[tripId] = JSON.parse(JSON.stringify(trips[tripId]));//_.extendOwn({}, trips[tripId]);   // The purpose of this instruction is to clone trips[tripId]
+        result[tripId].closestStopIndex = findClosestStopIndex(tripId, departureOptions);
+        result[tripId].hop = 0;
+        result[tripId].type = routes[result[tripId].routeId].type;
+        if(result[tripId].type == 1) {
+            result[tripId].color = routes[result[tripId].routeId].color;
         }
-        if(routesSelected[routeId][directionId] == undefined) {
-            routesSelected[routeId][directionId] = 1;
-        } else if(routesSelected[routeId][directionId] <= selectionOptions.maxNumberOfSameRouteAndDirectionTrips) {
-            result[tripId] = _.extend({}, trips[tripId]);   // The purpose of this instruction is to clone trips[tripId]
-            result[tripId].closestStopIndex = findClosestStopIndex(tripId, departureOptions.area.center);
-            result[tripId].hop = 0;
-            result[tripId].type = routes[result[tripId].routeId].type;
-            if(result[tripId].type == 1) {
-                result[tripId].color = routes[result[tripId].routeId].color;
-            }
 
-            result[tripId].stops.forEach(function(stop, i) {
-                var stopData = graph.getNodeData(stop.stopId);
-                result[tripId].stops[i].lat = stopData.stopLatitude;
-                result[tripId].stops[i].lon = stopData.stopLongitude;
-            });
-
-            routesSelected[routeId][directionId]++;
-        }
+        result[tripId].stops.forEach(function(stop, i) {
+            var stopData = graph.getNodeData(stop.stopId);
+            result[tripId].stops[i].lat = stopData.stopLatitude;
+            result[tripId].stops[i].lon = stopData.stopLongitude;
+            result[tripId].stops[i].name = stopData.stopName;
+        });
     });
 
     if(maxNumberOfTransfers == 1) {
@@ -396,7 +441,6 @@ var findFeasibleRides = function(departureOptions, transfersOptions, selectionOp
 
     // Find trips within departure area
     for(var tripId in result) {
-        //var closestStopIndex = findClosestStopIndex(tripId, location);
         for(var i = result[tripId].closestStopIndex; i < trips[tripId].stops.length; i++) {
             var stop = graph.getNodeData(result[tripId].stops[i].stopId);
             var depOptions = {
@@ -410,42 +454,27 @@ var findFeasibleRides = function(departureOptions, transfersOptions, selectionOp
                 },
                 timeRange: {
                     start: result[tripId].stops[i].arrivalTime,
-                    duration: transfersOptions.maxTransferTime
+                    duration: transfersOptions.maxTransferTime,
+                    dayOfWeek: departureOptions.timeRange.dayOfWeek
                 }
             };
             var transfers = findFeasibleRides(depOptions, transfersOptions, selectionOptions, maxNumberOfTransfers -1);
             result[tripId].stops[i].transfers = [];
+            // TODO: (idea) Make transfers a dictionary indexed on trip Id, each item containing stop index ?
             for(var transferId in transfers) {
-                // TODO: Check route duplicates
-                var routeId = trips[transferId].routeId;
-                var directionId = trips[transferId].directionId;
-                if(routesSelected[routeId] == undefined) {
-                    routesSelected[routeId] = {};
-                }
-                if(routesSelected[routeId][directionId] == undefined) {
-                    routesSelected[routeId][directionId] = 1;
-                } else if(routesSelected[routeId][directionId] <= selectionOptions.maxNumberOfSameRouteAndDirectionTrips) {
-                    transfers[transferId].hop++;
-                    result[tripId].stops[i].transfers.push({
-                        tripId: transferId,
-                        stopIndex: transfers[transferId].closestStopIndex
-                    });
+                transfers[transferId].hop++;
+                result[tripId].stops[i].transfers.push({
+                    tripId: transferId,
+                    stopIndex: transfers[transferId].closestStopIndex
+                });
 
-                    // Add transfer to result
-                    if(result[transferId] == undefined) {
-                        /*if(transferId == "46081413704") {
-                            console.log("A");
-                        }*/
-                        result[transferId] = _.extend({}, transfers[transferId]);
-                    } else {
-                        /*if(transferId == "46081413704") {
-                            console.log("B");
-                        }*/
-                        result[transferId].closestStopIndex =
-                            result[transferId].closestStopIndex < transfers[transferId].closestStopIndex ?
-                                result[transferId].closestStopIndex : transfers[transferId].closestStopIndex;
-                    }
-                    routesSelected[routeId][directionId]++;
+                // Add transfer to result
+                if(result[transferId] == undefined) {
+                    result[transferId] = transfers[transferId];
+                } else {
+                    result[transferId].closestStopIndex =
+                        result[transferId].closestStopIndex < transfers[transferId].closestStopIndex ?
+                            result[transferId].closestStopIndex : transfers[transferId].closestStopIndex;
                 }
             }
         }
@@ -572,11 +601,33 @@ var loadStops = function() {
         });
 };
 
+var loadCalendar = function() {
+    var calendar = app.locals.calendar;
+    csv
+        .fromPath("data/calendar.csv", {headers: true})
+        .on("data", function(row){
+            var serviceId = row["service_id"];
+            calendar[serviceId] = {};
+            calendar[serviceId].mon = parseInt(row["monday"]);
+            calendar[serviceId].tue = parseInt(row["tuesday"]);
+            calendar[serviceId].wed = parseInt(row["wednesday"]);
+            calendar[serviceId].thu = parseInt(row["thursday"]);
+            calendar[serviceId].fri = parseInt(row["friday"]);
+            calendar[serviceId].sat = parseInt(row["saturday"]);
+            calendar[serviceId].sun = parseInt(row["sunday"]);
+        })
+        .on("end", function(){
+            console.log("done calendar.csv");
+        });
+};
+
 var loadData = function() {
     app.locals.ctaGraph = ds.Graph();
     app.locals.trips = {};
     app.locals.routes = {};
+    app.locals.calendar = {};
     loadStops();
     loadStopTimes();
     loadRoutes();
+    loadCalendar();
 } ();

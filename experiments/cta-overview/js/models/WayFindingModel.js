@@ -63,6 +63,14 @@ function WayFindingModel() {
     };
 
     /**
+     * Returns day of the week (sunday=0, monday=1, ...)
+     * @returns {number}
+     */
+    this.getDepartureDay = function() {
+        return 1;//(new Date()).getDay();
+    };
+
+    /**
      *
      * @param speed
      */
@@ -98,7 +106,7 @@ function WayFindingModel() {
      * @param meters
      */
     this.setNearbyMaximumRadius = function(meters) {
-
+        _nearbyMaximumRadius = meters;
     };
 
     /**

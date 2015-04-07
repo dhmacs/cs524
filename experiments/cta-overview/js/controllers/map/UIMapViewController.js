@@ -37,7 +37,10 @@ function UIMapViewController() {
 
 
             // Set wayfinding parameters
-            __model.getWayFindingModel().setOriginLocation(41.869904, -87.647522);//41.869904, -87.647522);//41.894591, -87.624161);//41.869749, -87.649224);
+            // UIC 41.869904, -87.647522
+            // Navy 41.891604, -87.609666
+            // Magnificent Mile 41.892482, -87.624215
+            __model.getWayFindingModel().setOriginLocation(41.869904, -87.647522);
             __model.getWayFindingModel().setNearbyMaximumRadius(400);
             __model.getWayFindingModel().setMaximumWaitingTime(Utils.toSeconds(0, 15, 0));
             __model.getWayFindingModel().setLookAheadTime(Utils.toSeconds(1, 0, 0));
@@ -67,8 +70,11 @@ function UIMapViewController() {
 
             var layer;
 
-            layer = new UserLocationSceneController();
-            _director.addScene(layer, 0, "location");
+            layer = new WalkingWaveSceneController();
+            _director.addScene(layer, 0, "walk");
+
+            layer = new LocationSceneController();
+            _director.addScene(layer, 1, "location");
 
             layer = new PathSceneController();
             _director.addScene(layer, 6, "paths");
@@ -76,8 +82,9 @@ function UIMapViewController() {
             layer = new VehiclesStopsSceneController();
             _director.addScene(layer, 9, "stops");
 
+            /*
             layer = new TransfersSceneController();
-            _director.addScene(layer, 12, "transfers");
+            _director.addScene(layer, 12, "transfers");*/
 
             layer = new VehiclesSceneController();
             _director.addScene(layer, 15, "vehicles");
@@ -110,7 +117,7 @@ function UIMapViewController() {
 
             var forwardSpeedFunction = Utils.scale.exponential();//.sin();//d3.scale.pow();
             forwardSpeedFunction.exponent(4);
-            forwardSpeedFunction.smoothness(1/5);
+            forwardSpeedFunction.smoothness(1/10);
             forwardSpeedFunction.range([0.1, 3]);
 
             var backwardSpeedFunction = d3.scale.linear();//Utils.scale.exponential();//.sin();//d3.scale.pow();
@@ -219,7 +226,7 @@ function UIMapViewController() {
                                 ]);*/
 
                                 // Step forward
-                                __model.getAnimationModel().step(forwardSpeedFunction(animationTime));
+                                //__model.getAnimationModel().step(forwardSpeedFunction(animationTime));
                             } else {
                                 animationTime = __model.getAnimationModel().getTime();
 
@@ -233,7 +240,7 @@ function UIMapViewController() {
                                         });*/
                                     __model.getMapModel().getMap()
                                         .easeTo(new mapboxgl.LatLng(location.lat, location.lon), zoom.max, undefined, {
-                                            duration: 12000
+                                            duration: 10000
                                         });
                                     animatingView = true;
                                 }
@@ -259,29 +266,13 @@ function UIMapViewController() {
             });
 
 
-            // Add side bar
-            /*
-            var sideController = new UISideInfoBarViewController();
-            var map = __model.getMapModel().getMap();
-            var size = {
-                width: 300,
-                height: map.canvas.canvas.height
-            };
-            sideController.getView().getD3Layer().style("position", "absolute");
-            sideController.getView().getD3Layer().style("top", "0px");
-            sideController.getView().getD3Layer().style("right", "0px");
-            sideController.getView().getD3Layer().style("height", size.height + "px");
-            sideController.getView().getD3Layer().style("width", size.width + "px");
-            sideController.getView().setViewBox(0, 0, size.width, size.height);
-            self.add(sideController);*/
-
-
             // Add animation time view controller
+            /*
             var animationTimeVC = new UIAnimationTimeViewController();
             animationTimeVC.getView().getD3Layer().style("position", "absolute");
             animationTimeVC.getView().getD3Layer().style("bottom", "0px");
             animationTimeVC.getView().getD3Layer().style("left", "0px");
-            self.add(animationTimeVC);
+            self.add(animationTimeVC);*/
         });
 
 

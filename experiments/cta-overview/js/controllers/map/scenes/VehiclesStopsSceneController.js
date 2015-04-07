@@ -162,7 +162,7 @@ function VehiclesStopsSceneController() {
         };
 
         var uniforms = {
-            texture:   { type: "t", value: Utils.gl.circleTexture() }
+            texture:   { type: "t", value: Utils.gl.roundTexture() }
         };
 
         var shaderMaterial = new THREE.ShaderMaterial( {

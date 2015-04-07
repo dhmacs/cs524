@@ -28,7 +28,30 @@ function UIWindowController(htmlContainer) {
         // Initialize model
         self.getView().addClass("ui-window-controller");
 
-        self.add(new UIMapViewController());
+        var mapVC = new UIMapViewController();
+        mapVC.getView().getD3Layer().style("position", "absolute");
+        mapVC.getView().getD3Layer().style("top", "0px");
+        mapVC.getView().getD3Layer().style("left", "0px");
+        mapVC.getView().getD3Layer().style("width", "80vw");
+
+        var timesTableVC = new UITimesTableViewController();
+        timesTableVC.getView().getD3Layer().style("position", "absolute");
+        timesTableVC.getView().getD3Layer().style("top", "0px");
+        timesTableVC.getView().getD3Layer().style("right", "0px");
+        timesTableVC.getView().getD3Layer().style("width", "20vw");
+        timesTableVC.getView().getD3Layer().style("height", "100vh");
+
+        var animationTimeVC = new UIAnimationTimeViewController();
+        animationTimeVC.getView().getD3Layer().style("position", "absolute");
+        animationTimeVC.getView().getD3Layer().style("bottom", "0px");
+        animationTimeVC.getView().getD3Layer().style("left", "0px");
+        animationTimeVC.getView().getD3Layer().style("width", "120px");
+        animationTimeVC.getView().getD3Layer().style("height", "120px");
+
+        // Add controllers
+        self.add(mapVC);
+        self.add(timesTableVC);
+        self.add(animationTimeVC);
     }();
 }
 

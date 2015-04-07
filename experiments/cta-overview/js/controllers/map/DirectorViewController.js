@@ -69,7 +69,7 @@ function DirectorViewController() {
     var init = function () {
         self.getView().getRenderer().autoClear = false;
         self.getView().addClass("director-view-controller");
-        self.getView().getRenderer().setClearColor(new THREE.Color("#ffffff"), 0.7);
+        self.getView().getRenderer().setClearColor(new THREE.Color("#fff"), 0.8);
     }();
 }
 

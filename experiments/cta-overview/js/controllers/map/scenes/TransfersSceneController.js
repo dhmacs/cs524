@@ -75,40 +75,42 @@ function TransfersSceneController() {
         for(var tripId in _transfers) {
             for(var transferId in _transfers[tripId]) {
                 _transfers[tripId][transferId].forEach(function(transfer) {
-                    var getOffTime = Utils.cta.toSeconds(_trips[tripId]["stops"][transfer.getOffStopIndex]["arrivalTime"]);
-                    var getOnTime = Utils.cta.toSeconds(_trips[transferId]["stops"][transfer.getOnStopIndex]["arrivalTime"]);
+                    if(_trips[transferId] != undefined) {
+                        var getOnTime = Utils.cta.toSeconds(_trips[transferId]["stops"][transfer.getOnStopIndex]["arrivalTime"]);
+                        var getOffTime = Utils.cta.toSeconds(_trips[tripId]["stops"][transfer.getOffStopIndex]["arrivalTime"]);
 
-                    if(time >= getOffTime && time <= getOnTime) {
-                        var opacityScale = d3.scale.linear()
-                            .domain([getOffTime, getOnTime])
-                            .range([_transferOpacity.max, _transferOpacity.min]);
+                        if(time >= getOffTime && time <= getOnTime) {
+                            var opacityScale = d3.scale.linear()
+                                .domain([getOffTime, getOnTime])
+                                .range([_transferOpacity.max, _transferOpacity.min]);
 
-                        var getOffLocationProj =__model.getMapModel().project(
-                            _trips[tripId]["stops"][transfer.getOffStopIndex]["lat"],
-                            _trips[tripId]["stops"][transfer.getOffStopIndex]["lon"]
-                        );
-                        var getOnLocationProj = __model.getMapModel().project(
-                            _trips[transferId]["stops"][transfer.getOnStopIndex]["lat"],
-                            _trips[transferId]["stops"][transfer.getOnStopIndex]["lon"]
-                        );
+                            var getOffLocationProj =__model.getMapModel().project(
+                                _trips[tripId]["stops"][transfer.getOffStopIndex]["lat"],
+                                _trips[tripId]["stops"][transfer.getOffStopIndex]["lon"]
+                            );
+                            var getOnLocationProj = __model.getMapModel().project(
+                                _trips[transferId]["stops"][transfer.getOnStopIndex]["lat"],
+                                _trips[transferId]["stops"][transfer.getOnStopIndex]["lon"]
+                            );
 
-                        // Position
-                        positions[pointIndex *3] = getOffLocationProj.x;
-                        positions[pointIndex *3 +1] = getOffLocationProj.y;
-                        positions[pointIndex *3 +2] = 1;
+                            // Position
+                            positions[pointIndex *3] = getOffLocationProj.x;
+                            positions[pointIndex *3 +1] = getOffLocationProj.y;
+                            positions[pointIndex *3 +2] = 1;
 
-                        // Color
-                        colors[pointIndex *3] = transferColor.r;
-                        colors[pointIndex *3 +1] = transferColor.g;
-                        colors[pointIndex *3 +2] = transferColor.b;
+                            // Color
+                            colors[pointIndex *3] = transferColor.r;
+                            colors[pointIndex *3 +1] = transferColor.g;
+                            colors[pointIndex *3 +2] = transferColor.b;
 
-                        // Size
-                        sizes[pointIndex] = _transferSize;
+                            // Size
+                            sizes[pointIndex] = _transferSize;
 
-                        // Opacity
-                        opacities[pointIndex] = opacityScale(time);
+                            // Opacity
+                            opacities[pointIndex] = opacityScale(time);
 
-                        pointIndex++;
+                            pointIndex++;
+                        }
                     }
                 });
             }
@@ -138,13 +140,6 @@ function TransfersSceneController() {
             sizeAttenuation: false,
             vertexColors: THREE.VertexColors
         });
-
-        /*
-        var transfersNumber = d3.sum(d3.values(_trips), function(trip) {
-            return d3.sum(trip["stops"], function(stop) {
-                return stop["transfers"].length;
-            });
-        });*/
 
         _transfers = {};
 

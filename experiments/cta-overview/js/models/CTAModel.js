@@ -111,12 +111,12 @@ function CTAModel() {
 
         // Nearby radius
         request += "/" + __model.getWayFindingModel().getNearbyMaximumRadius() + "/";
+        request += __model.getWayFindingModel().getDepartureDay() + "/";
 
         request +=
             (time.hh < 10 ? "0" : "") + time.hh + ":" +
             (time.mm < 10 ? "0" : "") + time.mm + ":" +
             (time.ss < 10 ? "0" : "") + time.ss;
-        //request += "13:15:00";
 
         request += "/" + __model.getWayFindingModel().getMaximumWaitingTime();
         request += "/" + __model.getWayFindingModel().getWalkingSpeed();

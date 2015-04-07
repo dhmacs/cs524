@@ -42,17 +42,22 @@ Utils.nowToSeconds = function() {
 
 Utils.now = function() {
     var now = new Date();
-    now.setHours(12);
-    now.setMinutes(0);
+    //now.setHours(12);
+    //now.setMinutes(0);
+    //now.setSeconds(56);
     return now;
 };
-
-
 
 
 /****************** GL ********************/
 Utils.gl.circleTexture = function() {
     var texture = THREE.ImageUtils.loadTexture( "img/circle.png" );
+    texture.minFilter = THREE.LinearFilter;
+    return texture;
+};
+
+Utils.gl.roundTexture = function() {
+    var texture = THREE.ImageUtils.loadTexture( "img/round.png" );
     texture.minFilter = THREE.LinearFilter;
     return texture;
 };
@@ -63,12 +68,18 @@ Utils.gl.transferTexture = function() {
     return texture;
 };
 
+Utils.gl.waveTexture = function() {
+    var texture = THREE.ImageUtils.loadTexture( "img/wave.png" );
+    texture.minFilter = THREE.LinearFilter;
+    return texture;
+};
+
 Utils.gl.getLabelMesh = function(text, color) {
     var textGeometry = new THREE.TextGeometry(text, {
         font: 'helvetiker',
         //weight: "regular",
         style: "normal",
-        size: 6
+        size: 7
     });
 
     var material = new THREE.MeshBasicMaterial({color: color});
