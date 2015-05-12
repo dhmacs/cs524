@@ -168,7 +168,7 @@ app.get('/api/stops/:lat/:lon/:radius', function(req,res){
     res.send(result);
 });*/
 
-app.get('/api/stops/:lat/:lon/:radius/:dayofweek/:time/:seconds/:walkingspeed', function(req,res){
+app.get('/api/trips/:lat/:lon/:radius/:dayofweek/:time/:seconds/:walkingspeed', function(req,res){
     var result;
 
     console.log("\nNEW REQUEST\n");
@@ -419,20 +419,32 @@ var findFeasibleRides = function(departureOptions, transfersOptions, selectionOp
     /**/
     var nearbyTripsIds = findTripsIds(departureOptions.area, departureOptions.timeRange);
     nearbyTripsIds.forEach(function(tripId) {
-        result[tripId] = JSON.parse(JSON.stringify(trips[tripId]));//_.extendOwn({}, trips[tripId]);   // The purpose of this instruction is to clone trips[tripId]
-        result[tripId].closestStopIndex = findClosestStopIndex(tripId, departureOptions);
-        result[tripId].hop = 0;
-        result[tripId].type = routes[result[tripId].routeId].type;
-        if(result[tripId].type == 1) {
-            result[tripId].color = routes[result[tripId].routeId].color;
-        }
+        var closestStopIndex = findClosestStopIndex(tripId, departureOptions);
 
-        result[tripId].stops.forEach(function(stop, i) {
-            var stopData = graph.getNodeData(stop.stopId);
-            result[tripId].stops[i].lat = stopData.stopLatitude;
-            result[tripId].stops[i].lon = stopData.stopLongitude;
-            result[tripId].stops[i].name = stopData.stopName;
-        });
+        if(closestStopIndex < (trips[tripId].stops.length -1)) {
+            result[tripId] = {};// JSON.parse(JSON.stringify(trips[tripId]));//_.extendOwn({}, trips[tripId]);   // The purpose of this instruction is to clone trips[tripId]
+
+            // Trip property
+            result[tripId].routeId = JSON.parse(JSON.stringify(trips[tripId].routeId));
+            result[tripId].routeLongName = JSON.parse(JSON.stringify(routes[result[tripId].routeId].longName));
+            result[tripId].direction = JSON.parse(JSON.stringify(trips[tripId].direction));
+            result[tripId].stops = JSON.parse(JSON.stringify(trips[tripId].stops));
+
+            // Derived properties
+            result[tripId].closestStopIndex = closestStopIndex;
+            result[tripId].hop = 0;
+            result[tripId].type = JSON.parse(JSON.stringify(routes[result[tripId].routeId].type));
+            if(result[tripId].type == 1) {
+                result[tripId].color = routes[result[tripId].routeId].color;
+            }
+
+            result[tripId].stops.forEach(function(stop, i) {
+                var stopData = graph.getNodeData(stop.stopId);
+                result[tripId].stops[i].lat = stopData.stopLatitude;
+                result[tripId].stops[i].lon = stopData.stopLongitude;
+                result[tripId].stops[i].name = stopData.stopName;
+            });
+        }
     });
 
     if(maxNumberOfTransfers == 1) {

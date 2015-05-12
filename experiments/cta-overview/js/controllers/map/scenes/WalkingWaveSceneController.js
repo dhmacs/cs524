@@ -49,13 +49,13 @@ function WalkingWaveSceneController() {
         var distance = d3.scale.linear().domain([start, end]).range([10, 1000]);
         sizes[0] = distance(time);
 
-        var opacity = d3.scale.linear().domain([start, end]).range([0.8, 0.2]);
+        var opacity = d3.scale.linear().domain([start, end]).range([0.15, 0.05]);
 
         var distanceColor =
             d3.scale.quantize()
                 .domain([start, (start + end) /2, end])
                 .range(["#d0d1e6", "#a6bddb", "#74a9cf", "#3690c0", "#0570b0", "#045a8d", "#023858"]);
-        color.setStyle("#6baed6");//distanceColor(time));
+        color.setStyle("#1C1C1C");//"#6baed6");//distanceColor(time));
         colors[0] = color.r;
         colors[1] = color.g;
         colors[2] = color.b;

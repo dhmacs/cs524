@@ -27,7 +27,7 @@ function UIMapCanvasViewController() {
     this.viewDidAppear = function() {
         var map = self.getModel().getMapModel().getMap();
 
-        var canvas = d3.select(map.canvas.canvas);
+        var canvas = d3.select(map._canvas.canvas);
         var size = {
             width: parseFloat(canvas.style("width")),
             height: parseFloat(canvas.style("height"))

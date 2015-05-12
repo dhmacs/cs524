@@ -28,7 +28,8 @@ function UIMapViewController() {
 
         mapboxgl.accessToken = 'pk.eyJ1IjoibWFjczkxIiwiYSI6Ik9JM050anMifQ.F7_I4Vj2A3EyBEynwIcr0w';
 
-        mapboxgl.util.getJSON('https://www.mapbox.com/mapbox-gl-styles/styles/outdoors-v6.json', function (err, style) {
+        /*'https://www.mapbox.com/mapbox-gl-styles/styles/outdoors-v6.json'*/
+        mapboxgl.util.getJSON('https://www.mapbox.com/mapbox-gl-styles/styles/outdoors-v7.json', function (err, style) {
             if (err) throw err;
 
             // Set location
@@ -92,25 +93,6 @@ function UIMapViewController() {
             layer = new VehiclesLabelSceneController();
             _director.addScene(layer, 18, "vehiclesLabels");
 
-            /*
-
-             layer = new TrailsSceneController();
-             _director.addScene(layer, 6, "trails");
-
-             layer = new BusNumbersSceneController();
-             _director.addScene(layer, 9, "numbers");
-
-             layer = new StopsSceneController();
-             _director.addScene(layer, 7, "stops");
-
-            layer = new ConnectionsSceneController();
-            _director.addScene(layer, 3, "connections");
-
-            layer = new VehiclesPositionSceneController();
-            _director.addScene(layer, 12, "vehiclesPositions");
-
-            layer = new VehiclesLabelSceneController();
-            _director.addScene(layer, 15, "vehiclesLabels");*/
 
             // Start cta model updates
             __model.getCTAModel().startUpdates();

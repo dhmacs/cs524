@@ -74,6 +74,10 @@ function VehiclesSceneController() {
             var trip = _trips[tripId];
 
             var lastRelevantStopIndex = Utils.cta.getLastStopIndex(time, trip["stops"]);
+
+            var finalStopIndex = trip["stops"].length -1;
+            var finalDestinationTime = Utils.cta.toSeconds(trip["stops"][finalStopIndex]["arrivalTime"]);
+
             var relevant = trip["hop"] == 0 || lastRelevantStopIndex >= trip["closestStopIndex"];
 
             if(lastRelevantStopIndex != -1 && relevant) {
@@ -97,19 +101,6 @@ function VehiclesSceneController() {
                 positions[vehicleIndex * 3 + 1] = projection.y;
                 positions[vehicleIndex * 3 + 2] = 1;
 
-                /*
-                opacities[vehicleIndex] = _vehicleOpacity;
-
-                if(trip["color"] != undefined) {
-                    vehicleColor.setStyle("#" + trip["color"]);
-                    sizes[vehicleIndex] = _trainSize;
-                } else if(trip["hop"] == 0) {
-                    vehicleColor.setStyle("#3182bd");
-                    sizes[vehicleIndex] = _busSize;
-                } else {
-                    vehicleColor.setStyle("#95a5a6");
-                    sizes[vehicleIndex] = _busSize;
-                }*/
 
                 if(trip["color"] != undefined) {
                     vehicleColor.setStyle("#" + trip["color"]);
@@ -132,6 +123,37 @@ function VehiclesSceneController() {
                     vehicleColor.lerp(grayShade, 0.3);
 
                     opacities[vehicleIndex] = _vehicleOpacity.transfer;
+                }
+
+                colors[vehicleIndex * 3] = vehicleColor.r;
+                colors[vehicleIndex * 3 + 1] = vehicleColor.g;
+                colors[vehicleIndex * 3 + 2] = vehicleColor.b;
+            } else if(time >= finalDestinationTime) {
+                lat = parseFloat(trip["stops"][finalStopIndex]["lat"]);
+                lon = parseFloat(trip["stops"][finalStopIndex]["lon"]);
+
+                projection = __model.getMapModel().project(lat, lon);
+                positions[vehicleIndex * 3] = projection.x;
+                positions[vehicleIndex * 3 + 1] = projection.y;
+                positions[vehicleIndex * 3 + 2] = 1;
+
+                if(trip["color"] != undefined) {
+                    vehicleColor.setStyle("#" + trip["color"]);
+                    sizes[vehicleIndex] = _trainSize;
+                } else {
+                    vehicleColor.setStyle(__model.getThemeModel().busColor());
+                    sizes[vehicleIndex] = _busSize;
+                }
+
+                if(trip["hop"] == 0) {
+                    opacities[vehicleIndex] = 0.2;
+                } else {
+                    grayShade = new THREE.Color();
+                    grayShade.setStyle("#969696");
+
+                    vehicleColor.lerp(grayShade, 0.5);
+
+                    opacities[vehicleIndex] = 0.2;
                 }
 
                 colors[vehicleIndex * 3] = vehicleColor.r;

@@ -127,6 +127,8 @@ function VehiclesStopsSceneController() {
                 var i = firstRelevantStopIndex +1;
 
                 for(; i <= lastRelevantStopIndex; i++) {
+                    var stopTime = Utils.cta.toSeconds(trip["stops"][i]["arrivalTime"]);
+
                     // Position
                     var projection = __model.getMapModel().project(trip["stops"][i]["lat"], trip["stops"][i]["lon"]);
                     positions[pointIndex * 3] = projection.x;
@@ -141,10 +143,24 @@ function VehiclesStopsSceneController() {
                     // Size
                     sizes[pointIndex] = vehicleSize;
 
+                    // Try variable stop size
+                    if(i == lastRelevantStopIndex && i < (trip["stops"].length -1)) {
+                        var nextStopTime = Utils.cta.toSeconds(trip["stops"][i+1]["arrivalTime"]);
+                        var sizeScale = d3.scale.linear()
+                            .domain([stopTime, nextStopTime]);
+                        if(parseInt(trip["type"]) == 3) {
+                            sizeScale.range([_busStopSize *2, _busStopSize])
+                        } else {
+                            sizeScale.range([_trainStopSize *2, _trainStopSize])
+                        }
+
+                        sizes[pointIndex] = sizeScale(time);
+                    }
+
                     // Opacity
                     relevant = trip["hop"] == 0 || i >= trip["closestStopIndex"];
                     if(relevant) {
-                        opacities[pointIndex] = opacityScale(Utils.cta.toSeconds(trip["stops"][i]["arrivalTime"]));
+                        opacities[pointIndex] = opacityScale(stopTime);
                     }
 
                     pointIndex++;

@@ -42,8 +42,8 @@ Utils.nowToSeconds = function() {
 
 Utils.now = function() {
     var now = new Date();
-    //now.setHours(12);
-    //now.setMinutes(0);
+    //now.setHours(20);
+    //now.setMinutes(9);
     //now.setSeconds(56);
     return now;
 };
@@ -73,6 +73,13 @@ Utils.gl.waveTexture = function() {
     texture.minFilter = THREE.LinearFilter;
     return texture;
 };
+
+Utils.gl.smileTexture = function() {
+    var texture = THREE.ImageUtils.loadTexture( "img/smile.png" );
+    texture.minFilter = THREE.LinearFilter;
+    return texture;
+};
+
 
 Utils.gl.getLabelMesh = function(text, color) {
     var textGeometry = new THREE.TextGeometry(text, {

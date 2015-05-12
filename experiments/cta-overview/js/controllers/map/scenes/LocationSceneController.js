@@ -16,7 +16,7 @@ function LocationSceneController() {
 
 
     // UI
-    var _locationSize = 5 * window.devicePixelRatio;
+    var _locationSize = 12 * window.devicePixelRatio;
 
     /*------------------ PUBLIC METHODS ------------------*/
     /**
@@ -46,7 +46,7 @@ function LocationSceneController() {
         // Location
         sizes[0] = _locationSize;
 
-        color.setStyle("#4393c3");
+        color.setStyle("#1C1C1C");//"#4393c3");
         colors[0] = color.r;
         colors[1] = color.g;
         colors[2] = color.b;
@@ -55,7 +55,7 @@ function LocationSceneController() {
         positions[1] = projection.y;
         positions[2] = 1;
 
-        opacities[0] = 1.0;
+        opacities[0] = 0.8;
     };
 
     var init = function () {

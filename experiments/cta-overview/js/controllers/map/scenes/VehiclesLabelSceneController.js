@@ -58,6 +58,9 @@ function VehiclesLabelSceneController() {
             var lastRelevantStopIndex = Utils.cta.getLastStopIndex(time, trip["stops"]);
             var relevant = trip["hop"] == 0 || lastRelevantStopIndex >= trip["closestStopIndex"];
 
+            var finalStopIndex = trip["stops"].length -1;
+            var finalDestinationTime = Utils.cta.toSeconds(trip["stops"][finalStopIndex]["arrivalTime"]);
+
             if(lastRelevantStopIndex != -1 && relevant) {
                 var next = Utils.cta.toSeconds(trip["stops"][lastRelevantStopIndex +1]["arrivalTime"]);
                 var previous = Utils.cta.toSeconds(trip["stops"][lastRelevantStopIndex]["departureTime"]);
@@ -85,7 +88,16 @@ function VehiclesLabelSceneController() {
                     _vehiclesLabelGroup.add(_vehiclesLabels[tripId]);
                 }
                 Utils.gl.positionTextMesh(_vehiclesLabels[tripId], projection.x, projection.y);
-            } else if(_vehiclesLabels[tripId] != undefined) {
+            }
+            else if(time >= finalDestinationTime) {
+                lat = parseFloat(trip["stops"][finalStopIndex]["lat"]);
+                lon = parseFloat(trip["stops"][finalStopIndex]["lon"]);
+
+                projection = __model.getMapModel().project(lat, lon);
+
+                Utils.gl.positionTextMesh(_vehiclesLabels[tripId], projection.x, projection.y);
+            }
+            else if(_vehiclesLabels[tripId] != undefined) {
                 _vehiclesLabelGroup.remove(_vehiclesLabels[tripId]);
                 delete _vehiclesLabels[tripId];
             }

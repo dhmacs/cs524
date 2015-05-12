@@ -107,7 +107,7 @@ function CTAModel() {
     this.updateData = function() {
         var requestLocation = __model.getWayFindingModel().getOriginLocation();
         var time = Utils.cta.secondsToHhMmSs(__model.getWayFindingModel().getDepartureTime());
-        var request = "http://127.0.0.1:3000/api/stops/" + requestLocation.lat + "/" + requestLocation.lon;//41.869621/-87.648757/500/";
+        var request = "http://127.0.0.1:3000/api/trips/" + requestLocation.lat + "/" + requestLocation.lon;//41.869621/-87.648757/500/";
 
         // Nearby radius
         request += "/" + __model.getWayFindingModel().getNearbyMaximumRadius() + "/";

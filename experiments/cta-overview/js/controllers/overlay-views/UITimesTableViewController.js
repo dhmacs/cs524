@@ -86,6 +86,11 @@ function UITimesTableViewController() {
                 return trip["stops"][trip["closestStopIndex"]]["name"];
             });
 
+        gVehicles.select(".direction")
+            .text(function(trip) {
+                return trip["direction"] + " on " + trip["routeLongName"];
+            });
+
         // Enter
         var gVehiclesNew = gVehicles.enter()
             .append("g")
@@ -128,6 +133,7 @@ function UITimesTableViewController() {
         // TOWARD label
         gVehiclesNew
             .append("text")
+            .classed("direction", true)
             .attr("x", (timeTable.entry.icon.width + timeTable.entry.labels.padding.left) + "px")
             .attr("y", "10px")
             .attr("dy", "0.4em")
@@ -135,8 +141,7 @@ function UITimesTableViewController() {
             .style("fill", "#D7D7D7")
             .style("font-family", "Helvetica Neue")
             .style("font-weight", "100")
-            .style("font-size", "12px")
-            .text("Toward");
+            .style("font-size", "12px");
 
         // DUE IN label
         gVehiclesNew
@@ -190,7 +195,7 @@ function UITimesTableViewController() {
             .attr("text-anchor", "left")
             .style("fill", "#D7D7D7")
             .style("font-family", "Helvetica Neue")
-            .style("font-weight", "100")
+            .style("font-weight", "300")
             .style("font-size", "12px")
             .text(function(trip) {
                 return trip["stops"][trip["closestStopIndex"]]["name"];
