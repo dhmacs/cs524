@@ -4,14 +4,14 @@
  */
 var express = require('express');
 var app = express();
-var mysql = require('mysql');
-var connection = mysql.createConnection({
-    host     : 'localhost',
-    user     : 'root',
-    password : 'root',
-    database : 'ctafeed_db',
-    port : '8889'
-});
+//var mysql = require('mysql');
+//var connection = mysql.createConnection({
+//    host     : 'localhost',
+//    user     : 'root',
+//    password : 'root',
+//    database : 'ctafeed_db',
+//    port : '8889'
+//});
 
 var csv = require("fast-csv");
 var _ = require("underscore");
@@ -30,11 +30,14 @@ app.use(function(req, res, next) {
     next();
 });
 
-/*
+
+
+
 app.get('/', function(req,res){
+	console.log("HELLO");
     res.send("hi");
 });
-
+/*
 
 app.get('/api/trips/:time', function(req,res){
     //console.log(macs);
@@ -496,9 +499,10 @@ var findFeasibleRides = function(departureOptions, transfersOptions, selectionOp
 };
 
 
-
-app.listen(3000);
-console.log('listening on port 3000');
+app.set('port', process.env.PORT || 3000);
+app.listen(app.get('port'));
+// app.listen(3000);
+console.log('listening on port ' + app.get('port'));
 
 
 var loadRoutes = function() {
@@ -616,7 +620,7 @@ var loadStops = function() {
 var loadCalendar = function() {
     var calendar = app.locals.calendar;
     csv
-        .fromPath("data/calendar.csv", {headers: true})
+        .fromPath(__dirname + "/data/calendar.csv", {headers: true})
         .on("data", function(row){
             var serviceId = row["service_id"];
             calendar[serviceId] = {};

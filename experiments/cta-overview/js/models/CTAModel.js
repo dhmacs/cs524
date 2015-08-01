@@ -38,6 +38,10 @@ function CTAModel() {
      * @returns {*}
      */
     this.getTrips = function() {
+        //if(_trips != null) {
+        //    _trips['445084097649'].hop = 0;
+        //    return {'445084097649': _trips['445084097649']};
+        //}
         return _trips;
     };
 
@@ -107,7 +111,9 @@ function CTAModel() {
     this.updateData = function() {
         var requestLocation = __model.getWayFindingModel().getOriginLocation();
         var time = Utils.cta.secondsToHhMmSs(__model.getWayFindingModel().getDepartureTime());
+        //var request = "http://127.0.0.1:3000/api/trips/" + requestLocation.lat + "/" + requestLocation.lon;//41.869621/-87.648757/500/";
         var request = "http://127.0.0.1:3000/api/trips/" + requestLocation.lat + "/" + requestLocation.lon;//41.869621/-87.648757/500/";
+
 
         // Nearby radius
         request += "/" + __model.getWayFindingModel().getNearbyMaximumRadius() + "/";
@@ -118,6 +124,7 @@ function CTAModel() {
             (time.mm < 10 ? "0" : "") + time.mm + ":" +
             (time.ss < 10 ? "0" : "") + time.ss;
 
+
         request += "/" + __model.getWayFindingModel().getMaximumWaitingTime();
         request += "/" + __model.getWayFindingModel().getWalkingSpeed();
 
@@ -126,6 +133,7 @@ function CTAModel() {
         d3.json(request, function(json) {
             console.timeEnd("RequestTime");
             _trips = json;
+            __god = _trips;
             __notificationCenter.dispatch(Notifications.CTA.TRIPS_UPDATED);
         });
     };

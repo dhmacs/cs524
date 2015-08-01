@@ -1,11 +1,11 @@
 /**
- * @class LocationSceneController
+ * @class WalkIconSceneController
  * @description
  *
  * @author Massimo De Marchi
- * @created 4/3/15.
+ * @created 7/22/15.
  */
-function LocationSceneController() {
+function WalkIconSceneController() {
     SceneController.call(this);
 
     /*---------------- PRIVATE ATTRIBUTES ----------------*/
@@ -16,7 +16,7 @@ function LocationSceneController() {
 
 
     // UI
-    var _locationSize = 8 * window.devicePixelRatio;
+    var _iconSize = 23 * window.devicePixelRatio;
 
     /*------------------ PUBLIC METHODS ------------------*/
     /**
@@ -43,19 +43,24 @@ function LocationSceneController() {
         var location = __model.getWayFindingModel().getOriginLocation();
         var projection = __model.getMapModel().project(location.lat, location.lon);
 
-        // Location
-        sizes[0] = _locationSize;
+        var start = __model.getAnimationModel().getStartTime();
+        var end = __model.getAnimationModel().getEndTime();
 
-        color.setStyle("#1C1C1C");//"#4393c3");
+        var distance = d3.scale.linear().domain([start, end]).range([-20, 230]);
+
+        // Location
+        sizes[0] = _iconSize;
+
+        color.setStyle("#999");//"#4393c3");
         colors[0] = color.r;
         colors[1] = color.g;
         colors[2] = color.b;
 
         positions[0] = projection.x;
-        positions[1] = projection.y;
+        positions[1] = projection.y - distance(time);
         positions[2] = 1;
 
-        opacities[0] = 0.8;
+        opacities[0] = 1.0;
     };
 
     var init = function () {
@@ -67,7 +72,7 @@ function LocationSceneController() {
         };
 
         var uniforms = {
-            texture:   { type: "t", value: Utils.gl.circleTexture() }
+            texture:   { type: "t", value: Utils.gl.walkIconTexture() }
         };
 
         var shaderMaterial = new THREE.ShaderMaterial( {
@@ -98,4 +103,4 @@ function LocationSceneController() {
     }();
 }
 
-Utils.extend(LocationSceneController, SceneController);
+Utils.extend(WalkIconSceneController, SceneController);

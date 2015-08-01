@@ -74,8 +74,14 @@ function UIMapViewController() {
             layer = new WalkingWaveSceneController();
             _director.addScene(layer, 0, "walk");
 
+            layer = new WalkIconSceneController();
+            _director.addScene(layer, 1, "walkIcon");
+
+            layer = new WalkTimeSceneController();
+            _director.addScene(layer, 3, "walkTime");
+
             layer = new LocationSceneController();
-            _director.addScene(layer, 1, "location");
+            _director.addScene(layer, 3, "location");
 
             layer = new PathSceneController();
             _director.addScene(layer, 6, "paths");
@@ -100,12 +106,12 @@ function UIMapViewController() {
             var forwardSpeedFunction = Utils.scale.exponential();//.sin();//d3.scale.pow();
             forwardSpeedFunction.exponent(4);
             forwardSpeedFunction.smoothness(1/10);
-            forwardSpeedFunction.range([0.1, 3]);
+            forwardSpeedFunction.range([0.2, 4]);
 
             var backwardSpeedFunction = d3.scale.linear();//Utils.scale.exponential();//.sin();//d3.scale.pow();
             //backwardSpeedFunction.smoothness(1/5);
             //backwardSpeedFunction.exponent(4);
-            backwardSpeedFunction.range([2, 5]);
+            backwardSpeedFunction.range([3, 6]);
 
 
             var zoomFunction = Utils.scale.sin();
@@ -154,11 +160,7 @@ function UIMapViewController() {
                             animationTime = __model.getAnimationModel().getTime();
 
                             if(__model.getAnimationModel().getElapsedTime() > handle.first && !animatingView) {
-                                /*bounds = __model.getCTAModel().getBoundaries(__model.getAnimationModel().getEndTime());
-                                __model.getMapModel().getMap().fitBounds(
-                                    [[bounds.minLat, bounds.minLon],[bounds.maxLat, bounds.maxLon]], {
-                                        speed: 0.1
-                                    });*/
+
                                 var centroid = __model.getCTAModel().getCentroid();
                                 __model.getMapModel().getMap()
                                     .easeTo(new mapboxgl.LatLng(centroid.lat, centroid.lon), zoom.min, undefined, {
@@ -166,18 +168,6 @@ function UIMapViewController() {
                                     });
                                 animatingView = true;
                             }
-
-                            /*
-                            // Change zoom
-                            __model.getMapModel().getMap().setZoom(zoomFunction(animationTime));
-                            // Change position
-                            var positionRatio = mapCenterFunction(animationTime);
-                            positionRatio = positionRatio > 1 ? 1 : positionRatio;
-                            positionRatio = positionRatio < 0 ? 0 : positionRatio;
-                            __model.getMapModel().getMap().setCenter([
-                                d3.interpolateNumber(location.lat, PTSCentroid.lat)(positionRatio),
-                                d3.interpolateNumber(location.lon, PTSCentroid.lon)(positionRatio)
-                            ]);*/
 
                             // Step forward
                             __model.getAnimationModel().step(forwardSpeedFunction(animationTime));
@@ -195,43 +185,16 @@ function UIMapViewController() {
                                 mapCenterFunction.domain([now, now + (duration) * easingRatio]);
 
                                 animationTime = __model.getAnimationModel().getTime();
-
-                                /*
-                                // Zoom
-                                __model.getMapModel().getMap().setZoom(zoomFunction(animationTime));
-                                var positionRatio = mapCenterFunction(animationTime);
-                                positionRatio = positionRatio > 1 ? 1 : positionRatio;
-                                positionRatio = positionRatio < 0 ? 0 : positionRatio;
-                                __model.getMapModel().getMap().setCenter([
-                                    d3.interpolateNumber(location.lat, PTSCentroid.lat)(positionRatio),
-                                    d3.interpolateNumber(location.lon, PTSCentroid.lon)(positionRatio)
-                                ]);*/
-
-                                // Step forward
-                                //__model.getAnimationModel().step(forwardSpeedFunction(animationTime));
                             } else {
                                 animationTime = __model.getAnimationModel().getTime();
 
                                 if(__model.getAnimationModel().getElapsedTime() < handle.second && !animatingView) {
-                                    /*
-                                    bounds = __model.getCTAModel()
-                                        .getBoundaries(__model.getAnimationModel().getStartTime() + 60);*/
-                                    /*__model.getMapModel().getMap().fitBounds(
-                                        [[bounds.minLat, bounds.minLon],[bounds.maxLat, bounds.maxLon]], {
-                                            speed: 0.1
-                                        });*/
                                     __model.getMapModel().getMap()
                                         .easeTo(new mapboxgl.LatLng(location.lat, location.lon), zoom.max, undefined, {
-                                            duration: 10000
+                                            duration: 10500
                                         });
                                     animatingView = true;
                                 }
-                                /*
-                                __model.getMapModel().getMap().setZoom(zoomFunction(animationTime));
-                                __model.getMapModel().getMap().setCenter([
-                                    d3.interpolateNumber(location.lat, PTSCentroid.lat)(mapCenterFunction(animationTime)),
-                                    d3.interpolateNumber(location.lon, PTSCentroid.lon)(mapCenterFunction(animationTime))
-                                ]);*/
                                 __model.getAnimationModel().stepBack(backwardSpeedFunction(animationTime));
                             }
 

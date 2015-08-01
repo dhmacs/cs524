@@ -17,16 +17,27 @@ function UIAnimationTimeViewController() {
 
     var _timeLabel;
 
+    var _updateTime = true;
+    var _elapsedTime = -1;
+
     /*------------------ PUBLIC METHODS ------------------*/
     this.timeUpdate = function() {
-        var time;
+        var newTime;
 
         // Displacement
-        time = __model.getAnimationModel().getElapsedTime();
-        var duration = __model.getAnimationModel().getDuration();
-        _timeLabel.text(Utils.cta.secondsToHhMmSs(time).mm);
+        newTime = __model.getAnimationModel().getElapsedTime();
+        var hhmmss = Utils.cta.secondsToHhMmSs(newTime);
 
-        _radialProgressBar.attr("d", _arc(time/duration));
+        var minutes = hhmmss.hh * 60 +  hhmmss.mm;
+
+        if(minutes > 5) {
+            minutes = Math.floor(minutes / 5) * 5;
+        }
+
+        var duration = __model.getAnimationModel().getDuration();
+        _timeLabel.text(minutes);
+
+        _radialProgressBar.attr("d", _arc(newTime/duration));
     };
 
     /*------------------ PRIVATE METHODS -----------------*/

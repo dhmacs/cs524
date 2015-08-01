@@ -42,9 +42,9 @@ Utils.nowToSeconds = function() {
 
 Utils.now = function() {
     var now = new Date();
-    //now.setHours(20);
-    //now.setMinutes(9);
-    //now.setSeconds(56);
+    //now.setHours(23);
+    //now.setMinutes(0);
+    //now.setSeconds(0);
     return now;
 };
 
@@ -74,6 +74,12 @@ Utils.gl.waveTexture = function() {
     return texture;
 };
 
+Utils.gl.walkIconTexture = function() {
+    var texture = THREE.ImageUtils.loadTexture( "img/man_walk.png" );
+    texture.minFilter = THREE.LinearFilter;
+    return texture;
+};
+
 Utils.gl.smileTexture = function() {
     var texture = THREE.ImageUtils.loadTexture( "img/smile.png" );
     texture.minFilter = THREE.LinearFilter;
@@ -86,7 +92,23 @@ Utils.gl.getLabelMesh = function(text, color) {
         font: 'helvetiker',
         //weight: "regular",
         style: "normal",
-        size: 7
+        size: 8
+    });
+
+    var material = new THREE.MeshBasicMaterial({color: color});
+    var mesh = new THREE.Mesh(textGeometry, material);
+
+    mesh.rotation.x = Math.PI;
+
+    return mesh;
+};
+
+Utils.gl.getTimeLabelMesh = function(text, color) {
+    var textGeometry = new THREE.TextGeometry(text, {
+        font: 'helvetiker',
+        weight: 'bold',
+        style: 'normal',
+        size: 9
     });
 
     var material = new THREE.MeshBasicMaterial({color: color});

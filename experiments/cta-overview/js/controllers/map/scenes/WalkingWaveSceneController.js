@@ -46,16 +46,16 @@ function WalkingWaveSceneController() {
         var start = __model.getAnimationModel().getStartTime();
         var end = __model.getAnimationModel().getEndTime();
 
-        var distance = d3.scale.linear().domain([start, end]).range([10, 1000]);
+        var distance = d3.scale.linear().domain([start, end]).range([100, 1000]);
         sizes[0] = distance(time);
 
-        var opacity = d3.scale.linear().domain([start, end]).range([0.15, 0.05]);
+        var opacity = d3.scale.linear().domain([start, end]).range([0.5, 0.2]);
 
         var distanceColor =
             d3.scale.quantize()
                 .domain([start, (start + end) /2, end])
                 .range(["#d0d1e6", "#a6bddb", "#74a9cf", "#3690c0", "#0570b0", "#045a8d", "#023858"]);
-        color.setStyle("#1C1C1C");//"#6baed6");//distanceColor(time));
+        color.setStyle("#aaa");//"#6baed6");//distanceColor(time));
         colors[0] = color.r;
         colors[1] = color.g;
         colors[2] = color.b;

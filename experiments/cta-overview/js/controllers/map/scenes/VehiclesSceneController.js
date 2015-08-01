@@ -23,8 +23,8 @@ function VehiclesSceneController() {
         nearby: 0.95,
         transfer: 0.65
     };
-    var _busSize = 18 * window.devicePixelRatio;
-    var _trainSize = 20 * window.devicePixelRatio;
+    var _busSize = 20 * window.devicePixelRatio;
+    var _trainSize = 25 * window.devicePixelRatio;
 
     /*------------------ PUBLIC METHODS ------------------*/
     /**
@@ -151,9 +151,9 @@ function VehiclesSceneController() {
                     grayShade = new THREE.Color();
                     grayShade.setStyle("#969696");
 
-                    vehicleColor.lerp(grayShade, 0.5);
+                    vehicleColor.lerp(grayShade, 0.6);
 
-                    opacities[vehicleIndex] = 0.2;
+                    opacities[vehicleIndex] = 0.4;
                 }
 
                 colors[vehicleIndex * 3] = vehicleColor.r;
